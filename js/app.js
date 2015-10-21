@@ -23,11 +23,13 @@ var MAX_ROW_INDEX = 5;	// 1
 						// 4
 						// 5
 
-//Sprite constants:  (it's weird that so much transparency is saved in the graphics):
+//Player constants:  (it's weird that so much transparency is saved in the graphics):
 var PLAYER_Y_OFFSET = -13;  //to center the sprites on a tile, shove up by this many px
+var PLAYER_START_COL = 2;  //starting position tile x
+var PLAYER_START_ROW = 5;  //starting position tile y
 
 //Array of available character graphics for the player
-var playerSprites = [
+var PLAYER_SPRITES = [
 	'images/char-boy.png',
 	'images/char-cat-girl.png',
 	'images/char-horn-girl.png',
@@ -36,6 +38,7 @@ var playerSprites = [
 ];
 
 //Enemy constants:
+var MAX_ENEMIES = 10;
 var ENEMY_Y_OFFSET = -17; //px
 var ENEMY_MIN_SPEED = 1;
 var ENEMY_MAX_SPEED = 6;
@@ -118,24 +121,35 @@ var Player = function() {
 	this.x;
 	this.y;
 	//tile coordinates (since moves by tiles)
-	this.col = 2;  //x
-	this.row = 5;  //y
+	this.col;  //x
+	this.row;  //y
+	this.placeAtStart();  //put player at starting position
 };
 
 //Assign the player character an image based on its spriteIndex
 Player.prototype.setSprite = function() {
-	this.sprite = playerSprites[this.spriteIndex];
+	this.sprite = PLAYER_SPRITES[this.spriteIndex];
 };
 
-//Increment spriteIndex and keep it in bounds of the playerSprites array
+//Increment spriteIndex and keep it in bounds of the PLAYER_SPRITES array
 Player.prototype.nextSprite = function() {
-	this.spriteIndex < playerSprites.length - 1 ? this.spriteIndex++ : this.spriteIndex = 0;
+	this.spriteIndex < PLAYER_SPRITES.length - 1 ? this.spriteIndex++ : this.spriteIndex = 0;
+}
+
+//Places player at the starting position
+Player.prototype.placeAtStart = function() {
+	this.col = PLAYER_START_COL;
+	this.row = PLAYER_START_ROW;
 }
 
 //Converts from tile position to x,y position
 Player.prototype.update = function(dt) {
 	this.x = this.col * COL_WIDTH;
 	this.y = this.row * ROW_HEIGHT + PLAYER_Y_OFFSET;
+
+	if (this.row === 0) {  //if made it to the finish line (the water)
+
+	}
 
 };
 
@@ -168,10 +182,22 @@ Player.prototype.handleInput = function(key) {
 	}
 };
 
+//Player can also use the mouse with the same functionality
+//as the keyboard.  (minus the c-key to change portraits, obviously)
+Player.prototype.handleClicks = function(tileCol, tileRow) {
+	var nearX = tileCol - this.col;
+	var nearY = tileRow - this.row;
+
+	//move if clicked on an adjacent (including diagonal) tile
+	if ((nearX >= -1 && nearX <= 1) && (nearY >= -1 && nearY <= 1)) {
+		this.col = tileCol;
+		this.row = tileRow;
+	}
+};
+
 // Now instantiate your objects.
 // Place all enemy objects in an array called allEnemies
 // Place the player object in a variable called player
-var MAX_ENEMIES = 10;
 var allEnemies = [];
 for (var i = 0; i < MAX_ENEMIES; i++) {
 	allEnemies.push(new Enemy());
@@ -194,6 +220,22 @@ document.addEventListener('keydown', function(event) {
 	}
 });
 
+//This adds the mouse as a control option
+  //Source help:  http://www.homeandlearn.co.uk/JS/html5_canvas_mouse_events.html
+document.querySelector('#canvas').addEventListener('mousedown', function(event) {
+	//convert mouse clicks to tile coordinates:
+	var tileCol = Math.floor(event.offsetX / COL_WIDTH);
+	//y is a little awkward due to the transparency included in the tile graphics
+	//In effect, it's like there's an extra 60%-row of padding at the top of the canvas
+	var tileRow = Math.floor((event.offsetY - ROW_HEIGHT * .60) / ROW_HEIGHT);
+
+	if (tileRow >= 0 && tileRow < MAX_ROW_INDEX + 1) {  //weed out any clicks not on the actual tiles
+		player.handleClicks(tileCol, tileRow);
+	}
+
+});
+
+//returns a random integer between the provided range, inclusively
 function getRandomInt(min, max) {
 	max++; //to make the max inclusive
 	return Math.floor(Math.random() * (max - min)) + min;

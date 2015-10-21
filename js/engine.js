@@ -21,13 +21,14 @@ var Engine = (function(global) {
 	 */
 	var doc = global.document,
 		win = global.window,
-		canvas = doc.createElement('canvas'),
+		//canvas = doc.createElement('canvas'),
+		canvas = doc.querySelector('#canvas'),
 		ctx = canvas.getContext('2d'),
 		lastTime;
 
 	canvas.width = SCREEN_WIDTH;
 	canvas.height = SCREEN_HEIGHT;
-	doc.body.appendChild(canvas);
+	//doc.body.appendChild(canvas);
 
 	/* This function serves as the kickoff point for the game loop itself
 	 * and handles properly calling the update and render methods.
@@ -174,15 +175,16 @@ var Engine = (function(global) {
 		'images/water-block.png',
 		'images/grass-block.png',
 		'images/enemy-bug.png',
-		playerSprites[0],
-		playerSprites[1],
-		playerSprites[2],
-		playerSprites[3],
-		playerSprites[4],
+		PLAYER_SPRITES[0],
+		PLAYER_SPRITES[1],
+		PLAYER_SPRITES[2],
+		PLAYER_SPRITES[3],
+		PLAYER_SPRITES[4],
+		'images/star.png'
 	]);
 	Resources.onReady(init);
 
-	/* Assign the canvas' context object to the global variable (the window
+	/* Assign the canvas' context object (and the canvas itself) to the global variable (the window
 	 * object when run in a browser) so that developer's can use it more easily
 	 * from within their app.js files.
 	 */
