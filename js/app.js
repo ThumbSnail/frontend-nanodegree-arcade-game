@@ -26,6 +26,15 @@ var MAX_ROW_INDEX = 5;	// 1
 //Sprite constants:  (it's weird that so much transparency is saved in the graphics):
 var PLAYER_Y_OFFSET = -13;  //to center the sprites on a tile, shove up by this many px
 
+//Array of available character graphics for the player
+var playerSprites = [
+	'images/char-boy.png',
+	'images/char-cat-girl.png',
+	'images/char-horn-girl.png',
+	'images/char-pink-girl.png',
+	'images/char-princess-girl.png'
+];
+
 //Enemy constants:
 var ENEMY_Y_OFFSET = -17; //px
 var ENEMY_MIN_SPEED = 1;
@@ -40,12 +49,7 @@ var enemyLowestRow = 3;
 
 // Enemies our player must avoid
 var Enemy = function() {
-	// Variables applied to each of our instances go here,
-	// we've provided one for you to get started
-
-	// The image/sprite for our enemies, this uses
-	// a helper we've provided to easily load images
-	this.sprite = 'images/enemy-bug.png';
+	this.sprite = 'images/enemy-bug.png';  //enemy image
 	
 	this.speed,	this.x, this.row;  //variables for speed and position
 	
@@ -97,11 +101,19 @@ Enemy.prototype.render = function() {
 	ctx.drawImage(Resources.get(this.sprite), this.x, y);
 };
 
+
+/*
+ *
+ *  Player Class
+ *
+*/
+
 // Now write your own player class
 // This class requires an update(), render() and
 // a handleInput() method.
 var Player = function() {
-	this.sprite = 'images/char-boy.png';
+	this.spriteIndex = 0;  
+	this.setSprite();  //assign the player an image based on its spriteIndex
 	//px coordinates, for rendering
 	this.x;
 	this.y;
@@ -109,6 +121,16 @@ var Player = function() {
 	this.col = 2;  //x
 	this.row = 5;  //y
 };
+
+//Assign the player character an image based on its spriteIndex
+Player.prototype.setSprite = function() {
+	this.sprite = playerSprites[this.spriteIndex];
+};
+
+//Increment spriteIndex and keep it in bounds of the playerSprites array
+Player.prototype.nextSprite = function() {
+	this.spriteIndex < playerSprites.length - 1 ? this.spriteIndex++ : this.spriteIndex = 0;
+}
 
 //Converts from tile position to x,y position
 Player.prototype.update = function(dt) {
@@ -138,6 +160,10 @@ Player.prototype.handleInput = function(key) {
 			break;
 		case 'down':
 			this.row < MAX_ROW_INDEX ? this.row++ : this.row = MAX_ROW_INDEX;
+			break;
+		case 'c':
+			this.nextSprite();
+			this.setSprite();
 			break;
 	}
 };
