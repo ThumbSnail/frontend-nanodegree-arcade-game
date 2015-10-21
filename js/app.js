@@ -1,3 +1,5 @@
+//Maybe all these consts should go in a global.js file or something?
+
 //Input constants:
 var ALLOWED_KEYS = {
 	37: 'left',
@@ -6,6 +8,10 @@ var ALLOWED_KEYS = {
 	40: 'down',
 	67: 'c'  //to switch player sprite
 };
+
+//Screen Dimension constants:
+var SCREEN_WIDTH = 505;
+var SCREEN_HEIGHT = 606;
 
 //Tile-Grid Dimension constants:
 var COL_WIDTH = 101;  //px
@@ -17,13 +23,19 @@ var MAX_ROW_INDEX = 5;	// 1
 						// 4
 						// 5
 
-//Player Sprite constants:  (weird because so much transparency is saved in the image):
-var PLAYER_Y_OFFSET = -13;  //to center the player on a tile, shove up by this many px
+//Sprite constants:  (it's weird that so much transparency is saved in the graphics):
+var PLAYER_Y_OFFSET = -13;  //to center the sprites on a tile, shove up by this many px
 
+//Enemy constants:
+var ENEMY_Y_OFFSET = -17; //px
+var ENEMY_MIN_SPEED = 1;
+var ENEMY_MAX_SPEED = 6;
+var ENEMY_DEFAULT_SPEED = 20; //px
 
-//Enemy Speed Range:
-var MAX_SPEED = 3;
-var MIN_SPEED = 1;
+//row range in which enemies can spawn:
+//Possible TODO: add more enemy rows once score reaches a certain point (in order to make game harder)
+var enemyHighestRow = 1;
+var enemyLowestRow = 3;
 
 
 // Enemies our player must avoid
@@ -34,19 +46,34 @@ var Enemy = function() {
 	// The image/sprite for our enemies, this uses
 	// a helper we've provided to easily load images
 	this.sprite = 'images/enemy-bug.png';
-	this.speed = Math.floor(Math.random() * (MAX_SPEED - MIN_SPEED) + MIN_SPEED); //Maybe Math.random() val?
-		//^Math.floor because Math.random returns a decimal between 0 and 1
-	this.spawn(); //should probably just pick a row and then be one col off left
-	//maybe the gems == could switch the direction the bugs run?
-	  //could you even make the game switch and have the bugs run down the column?
+	
+	this.speed,	this.x, this.row;  //variables for speed and position
+	
+	this.spawn(SCREEN_WIDTH);  //set up the position variables
+	this.setRandomSpeed();  //set up the speed;
 };
 
-Enemy.prototype.spawn = function() {
-	//83 = the tile height  ...but why do the graphics have so much extra transparency?  That's gonna complicate all the positioning...
-	//101 = the tile width
-	this.x = -101; //0 - image width (101, unless there's a way to grab this property)
-	this.y = Math.floor(Math.random() * (3 - 1) + 1) * 83;//random row between 1 and 3 (0 is water, the rest is safe grass)  //IDEA:  maybe you could mix up the map upon restart?  like stone, grass, stone for the rows?
+//Sets the position x and row (y) of the enemy
+Enemy.prototype.spawn = function(maxRange) {
+	_spawnX.call(this, maxRange);;  //set x position of the enemy
+	_spawnRow.call(this);  //set row (y) position of the enemy
 
+	//Sets the x of the enemy
+	//Takes a maxRange so that at the start of the game, some enemies can already be ON the map
+	function _spawnX(maxRange) {  
+		this.x = -COL_WIDTH + getRandomInt(0, maxRange); //stick offscreen left + random variance
+	}
+
+	//Sets the row (y) of the enemy
+	//Spawn on a random enemy row (the stone tiles)
+	function _spawnRow() {
+		this.row = getRandomInt(enemyHighestRow, enemyLowestRow);
+	}
+};
+
+//set the additional speed factor of this enemy
+Enemy.prototype.setRandomSpeed = function() {
+	this.speed = getRandomInt(ENEMY_MIN_SPEED, ENEMY_MAX_SPEED);
 };
 
 // Update the enemy's position, required method for game
@@ -56,20 +83,18 @@ Enemy.prototype.update = function(dt) {
 	// which will ensure the game runs at the same speed for
 	// all computers.
 
-	//screen has 5 cols (0 - 4), 505px to work with.  So a set minimum speed for all might be 10px per update?
-	//and then enemies can have their own speed value of 1 thru 3, so the fastest ones move 30px per update
-	this.x += this.speed * 10 * dt;
+	this.x += this.speed * ENEMY_DEFAULT_SPEED * dt; //distance travelled
 
-	//bounds:  once fully exits screen right == send back to left side of screen, but randomly switch rows.
-	if (this.x > (505 + 101)) {
-		this.x = -101;
+	if (this.x > (SCREEN_WIDTH + COL_WIDTH)) {  //bounds:  once fully offscreen right
+		this.spawn(-COL_WIDTH/2);  //reset to offscreen left plus a little variance
+		this.setRandomSpeed();  //assign a new random speed
 	}
-
 };
 
 // Draw the enemy on the screen, required method for game
 Enemy.prototype.render = function() {
-	ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
+	var y = this.row * ROW_HEIGHT + ENEMY_Y_OFFSET;
+	ctx.drawImage(Resources.get(this.sprite), this.x, y);
 };
 
 // Now write your own player class
@@ -77,22 +102,24 @@ Enemy.prototype.render = function() {
 // a handleInput() method.
 var Player = function() {
 	this.sprite = 'images/char-boy.png';
+	//px coordinates, for rendering
+	this.x;
+	this.y;
+	//tile coordinates (since moves by tiles)
 	this.col = 2;  //x
 	this.row = 5;  //y
 };
 
-
+//Converts from tile position to x,y position
 Player.prototype.update = function(dt) {
+	this.x = this.col * COL_WIDTH;
+	this.y = this.row * ROW_HEIGHT + PLAYER_Y_OFFSET;
 
 };
 
 //Draw the player on the screen.
-//Converts from tile position to x,y position
 Player.prototype.render = function() {
-	var x = this.col * COL_WIDTH;
-	var y = this.row * ROW_HEIGHT + PLAYER_Y_OFFSET;
-
-	ctx.drawImage(Resources.get(this.sprite), x, y);
+	ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
 };
 
 //Using the arrow keys, move Player 1 tile from current position
@@ -140,3 +167,8 @@ document.addEventListener('keydown', function(event) {
 		}
 	}
 });
+
+function getRandomInt(min, max) {
+	max++; //to make the max inclusive
+	return Math.floor(Math.random() * (max - min)) + min;
+}
