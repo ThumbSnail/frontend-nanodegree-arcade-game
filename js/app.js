@@ -1,8 +1,8 @@
-//TODO:  Also, should you make a base sprite class?  (Since there's some shared funcs
-	//between the enemies and the player now)
-
-//Maybe all these consts should go in a global.js file or something?
-//or... perhaps they should go onto their respective class's prototype?
+/*
+ *
+ * Global Constants & Variables
+ *
+*/
 
 //Input constants:
 var ALLOWED_KEYS = {
@@ -27,31 +27,8 @@ var MAX_ROW_INDEX = 5;	// 1
 						// 4
 						// 5
 
-//Player constants:  (it's weird that so much transparency is saved in the graphics):
-var PLAYER_Y_OFFSET = -13;  //to center the sprites on a tile, shove up by this many px
-var PLAYER_START_COL = 2;  //starting position tile x
-var PLAYER_START_ROW = 5;  //starting position tile y
-
-//Array of available character graphics for the player
-var PLAYER_SPRITES = [
-	'images/char-boy.png',
-	'images/char-cat-girl.png',
-	'images/char-horn-girl.png',
-	'images/char-pink-girl.png',
-	'images/char-princess-girl.png'
-];
-
-//Enemy constants:
+//Game constants:
 var MAX_ENEMIES = 10;
-var ENEMY_Y_OFFSET = -17; //px
-var ENEMY_MIN_SPEED = 1;
-var ENEMY_MAX_SPEED = 6;
-var ENEMY_DEFAULT_SPEED = 20; //px
-
-//row range in which enemies can spawn:
-//Possible TODO: add more enemy rows once score reaches a certain point (in order to make game harder)
-var enemyHighestRow = 1;
-var enemyLowestRow = 3;
 
 /*
  *
@@ -76,9 +53,21 @@ var Enemy = function() {
 	this.setCurrentCenterX();  //set up the value
 };
 
-//Enemy constants
-Enemy.prototype.RADIUS = Math.floor(0.40 * COL_WIDTH);  //half the bug's body is about 46px wide
+/* Enemy Constants and Common Variables */
+
+//For hit detection:
+Enemy.prototype.RADIUS = Math.floor(0.40 * COL_WIDTH);  //use most of the bug for hit detection
 Enemy.prototype.CENTER_X = Math.floor(COL_WIDTH / 2);  //the center of the bug's body
+//For positioning:
+Enemy.prototype.Y_OFFSET = -17; //px
+Enemy.prototype.enemyHighestRow = 1;  
+Enemy.prototype.enemyLowestRow = 3;
+//For speed:
+Enemy.prototype.MIN_SPEED = 1;
+Enemy.prototype.MAX_SPEED = 6;
+Enemy.prototype.DEFAULT_SPEED = 20; //px
+
+/* Enemy Methods */
 
 //Sets the position x and row (y) of the enemy
 Enemy.prototype.spawn = function(maxRange) {
@@ -94,13 +83,13 @@ Enemy.prototype.spawn = function(maxRange) {
 	//Sets the row (y) of the enemy
 	//Spawn on a random enemy row (the stone tiles)
 	function _spawnRow() {
-		this.row = getRandomInt(enemyHighestRow, enemyLowestRow);
+		this.row = getRandomInt(this.enemyHighestRow, this.enemyLowestRow);
 	}
 };
 
 //set the additional speed factor of this enemy
 Enemy.prototype.setRandomSpeed = function() {
-	this.speed = getRandomInt(ENEMY_MIN_SPEED, ENEMY_MAX_SPEED);
+	this.speed = getRandomInt(this.MIN_SPEED, this.MAX_SPEED);
 };
 
 //Updates the enemy's current center (its center in relation to its position on the map)
@@ -115,7 +104,7 @@ Enemy.prototype.update = function(dt) {
 	// which will ensure the game runs at the same speed for
 	// all computers.
 
-	this.x += this.speed * ENEMY_DEFAULT_SPEED * dt; //distance travelled
+	this.x += this.speed * this.DEFAULT_SPEED * dt; //distance travelled
 
 	this.setCurrentCenterX();  //keep track of its center relative to the map
 
@@ -129,7 +118,7 @@ Enemy.prototype.update = function(dt) {
 
 // Draw the enemy on the screen, required method for game
 Enemy.prototype.render = function() {
-	var y = this.row * ROW_HEIGHT + ENEMY_Y_OFFSET;  //convert tile coordinate to px (y)
+	var y = this.row * ROW_HEIGHT + this.Y_OFFSET;  //convert tile coordinate to px (y)
 	ctx.drawImage(Resources.get(this.sprite), this.x, y);
 };
 
@@ -175,25 +164,40 @@ var Player = function() {
 	this.setCurrentCenterX();  //set this value
 };
 
-//Constants for this player class:
+/* Player Constants */
+
 //For hit detection:
 Player.prototype.CENTER_X = Math.floor(COL_WIDTH / 2);  //the center of the player's body
 Player.prototype.RADIUS = Math.floor(0.163 * COL_WIDTH);  //half the player's body is about 16px wide
+//For positioning:
+Player.prototype.Y_OFFSET = -13;  //to center the sprites on a tile, shove up by this many px
+Player.prototype.START_COL = 2;  //starting position tile x
+Player.prototype.START_ROW = 5;  //starting position tile y
+//For character graphic:
+Player.prototype.SPRITES = [
+	'images/char-boy.png',
+	'images/char-cat-girl.png',
+	'images/char-horn-girl.png',
+	'images/char-pink-girl.png',
+	'images/char-princess-girl.png'
+];
+
+/* Player Methods */
 
 //Assign the player character an image based on its spriteIndex
 Player.prototype.setSprite = function() {
-	this.sprite = PLAYER_SPRITES[this.spriteIndex];
+	this.sprite = this.SPRITES[this.spriteIndex];
 };
 
-//Increment spriteIndex and keep it in bounds of the PLAYER_SPRITES array
+//Increment spriteIndex and keep it in bounds of the SPRITES array
 Player.prototype.nextSprite = function() {
-	this.spriteIndex < PLAYER_SPRITES.length - 1 ? this.spriteIndex++ : this.spriteIndex = 0;
+	this.spriteIndex < this.SPRITES.length - 1 ? this.spriteIndex++ : this.spriteIndex = 0;
 }
 
 //Places player at the starting position
 Player.prototype.placeAtStart = function() {
-	this.col = PLAYER_START_COL;
-	this.row = PLAYER_START_ROW;
+	this.col = this.START_COL;
+	this.row = this.START_ROW;
 }
 
 //Updates the player's current center (its center in relation to its position on the map)
@@ -213,7 +217,7 @@ Player.prototype.update = function(dt) {
 //Draw the player on the screen, first converting from tile coords to px (x,y)
 Player.prototype.render = function() {
 	var x = this.col * COL_WIDTH;
-	var y = this.row * ROW_HEIGHT + PLAYER_Y_OFFSET;
+	var y = this.row * ROW_HEIGHT + this.Y_OFFSET;
 	ctx.drawImage(Resources.get(this.sprite), x, y);
 };
 
@@ -259,6 +263,12 @@ Player.prototype.handleClicks = function(tileCol, tileRow) {
 	}
 };
 
+/*
+ *
+ * Object Instantiation
+ *
+*/
+
 // Now instantiate your objects.
 // Place all enemy objects in an array called allEnemies
 // Place the player object in a variable called player
@@ -268,6 +278,11 @@ for (var i = 0; i < MAX_ENEMIES; i++) {
 }
 var player = new Player();
 
+/*
+ *
+ * Event Listeners
+ *
+*/
 
 // This listens for key presses and sends the keys to your
 // Player.handleInput() method. You don't need to modify this.  (Well, I did!)
@@ -300,6 +315,12 @@ document.querySelector('#canvas').addEventListener('mousedown', function(event) 
 
 //possible TODO:  set up touch listeners for mobile devices
   //Source help:  http://www.homeandlearn.co.uk/JS/html5_canvas_touch_events.html
+
+/*
+ *
+ * Other Functions
+ *
+*/
 
 //returns a random integer between the provided range, inclusively
 function getRandomInt(min, max) {
