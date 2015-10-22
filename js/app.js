@@ -345,6 +345,10 @@ function getRandomInt(min, max) {
   //display the lives/hearts
     //possibly display icon of last gem picked up?
  //haha, add 'tweet high score' button?  (Can you save a picture of the canvas?)
+//mobile device touch listener?
+  //^Likewise, is it possible to make this game responsive?  Can you scale down everything on a 
+    //canvas to make it fit on the screen?
+//optimize graphics by using spritesheets?  (whole lotta extra work though...)
 
 //Gems:  increase your score AND have some effect on the game play
   //ideas:  -reverse the direction of the enemy movement?
