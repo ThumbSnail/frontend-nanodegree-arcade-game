@@ -1,4 +1,8 @@
+//TODO:  Also, should you make a base sprite class?  (Since there's some shared funcs
+	//between the enemies and the player now)
+
 //Maybe all these consts should go in a global.js file or something?
+//or... perhaps they should go onto their respective class's prototype?
 
 //Input constants:
 var ALLOWED_KEYS = {
@@ -49,16 +53,32 @@ var ENEMY_DEFAULT_SPEED = 20; //px
 var enemyHighestRow = 1;
 var enemyLowestRow = 3;
 
+/*
+ *
+ * Enemy Class
+ *
+*/
 
 // Enemies our player must avoid
 var Enemy = function() {
 	this.sprite = 'images/enemy-bug.png';  //enemy image
 	
-	this.speed,	this.x, this.row;  //variables for speed and position
-	
+	//for position:
+	this.x, this.row;  //row is (y) in tile coords
 	this.spawn(SCREEN_WIDTH);  //set up the position variables
-	this.setRandomSpeed();  //set up the speed;
+	
+	//for speed:
+	this.speed;
+	this.setRandomSpeed();  //set up the speed
+
+	//for hit detection:
+	this.currentCenterX;  //it's center when taking account its current position
+	this.setCurrentCenterX();  //set up the value
 };
+
+//Enemy constants
+Enemy.prototype.RADIUS = Math.floor(0.40 * COL_WIDTH);  //half the bug's body is about 46px wide
+Enemy.prototype.CENTER_X = Math.floor(COL_WIDTH / 2);  //the center of the bug's body
 
 //Sets the position x and row (y) of the enemy
 Enemy.prototype.spawn = function(maxRange) {
@@ -83,6 +103,11 @@ Enemy.prototype.setRandomSpeed = function() {
 	this.speed = getRandomInt(ENEMY_MIN_SPEED, ENEMY_MAX_SPEED);
 };
 
+//Updates the enemy's current center (its center in relation to its position on the map)
+Enemy.prototype.setCurrentCenterX = function() {
+	this.currentCenterX = this.x + this.CENTER_X;
+};
+
 // Update the enemy's position, required method for game
 // Parameter: dt, a time delta between ticks
 Enemy.prototype.update = function(dt) {
@@ -92,6 +117,10 @@ Enemy.prototype.update = function(dt) {
 
 	this.x += this.speed * ENEMY_DEFAULT_SPEED * dt; //distance travelled
 
+	this.setCurrentCenterX();  //keep track of its center relative to the map
+
+	this.detectCollision();  //see if enemy bumped into the player
+
 	if (this.x > (SCREEN_WIDTH + COL_WIDTH)) {  //bounds:  once fully offscreen right
 		this.spawn(-COL_WIDTH/2);  //reset to offscreen left plus a little variance
 		this.setRandomSpeed();  //assign a new random speed
@@ -100,8 +129,25 @@ Enemy.prototype.update = function(dt) {
 
 // Draw the enemy on the screen, required method for game
 Enemy.prototype.render = function() {
-	var y = this.row * ROW_HEIGHT + ENEMY_Y_OFFSET;
+	var y = this.row * ROW_HEIGHT + ENEMY_Y_OFFSET;  //convert tile coordinate to px (y)
 	ctx.drawImage(Resources.get(this.sprite), this.x, y);
+};
+
+//Determines whether or not the enemy has collided with the player
+  //Source help / adapted from:  https://developer.mozilla.org/en-US/docs/Games/Techniques/2D_collision_detection
+  //This still uses the idea of circle collision, but since the player and enemy MUST be
+  //in the same row, the math is simpler.
+Enemy.prototype.detectCollision = function() {
+	if (this.row == player.row) { //only check if enemy is in same row as player
+		//there's a collision when "the distance between the center points of the two sprites is less than
+		//their radii added together"
+
+		var distance = Math.abs(this.currentCenterX - player.currentCenterX);
+		var bothRadii = this.RADIUS + player.RADIUS;
+		if (distance < bothRadii) {
+			player.placeAtStart();
+		}
+	}
 };
 
 
@@ -115,16 +161,24 @@ Enemy.prototype.render = function() {
 // This class requires an update(), render() and
 // a handleInput() method.
 var Player = function() {
+	//for the sprite image:
 	this.spriteIndex = 0;  
 	this.setSprite();  //assign the player an image based on its spriteIndex
-	//px coordinates, for rendering
-	this.x;
-	this.y;
+
 	//tile coordinates (since moves by tiles)
 	this.col;  //x
 	this.row;  //y
 	this.placeAtStart();  //put player at starting position
+
+	//for hit detection:
+	this.currentCenterX;  //it's center when taking account its current position
+	this.setCurrentCenterX();  //set this value
 };
+
+//Constants for this player class:
+//For hit detection:
+Player.prototype.CENTER_X = Math.floor(COL_WIDTH / 2);  //the center of the player's body
+Player.prototype.RADIUS = Math.floor(0.163 * COL_WIDTH);  //half the player's body is about 16px wide
 
 //Assign the player character an image based on its spriteIndex
 Player.prototype.setSprite = function() {
@@ -142,20 +196,25 @@ Player.prototype.placeAtStart = function() {
 	this.row = PLAYER_START_ROW;
 }
 
-//Converts from tile position to x,y position
+//Updates the player's current center (its center in relation to its position on the map)
+Player.prototype.setCurrentCenterX = function() {
+	this.currentCenterX = this.col * COL_WIDTH + this.CENTER_X;
+};
+
+//TODO Looks for collisions on special items
+//Looks to see if over water (ie, won the round)
 Player.prototype.update = function(dt) {
-	this.x = this.col * COL_WIDTH;
-	this.y = this.row * ROW_HEIGHT + PLAYER_Y_OFFSET;
-
 	if (this.row === 0) {  //if made it to the finish line (the water)
-
+		//TODO:  up the score, reset player position, put stars in the water (remove when player makes first move)
 	}
 
 };
 
-//Draw the player on the screen.
+//Draw the player on the screen, first converting from tile coords to px (x,y)
 Player.prototype.render = function() {
-	ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
+	var x = this.col * COL_WIDTH;
+	var y = this.row * ROW_HEIGHT + PLAYER_Y_OFFSET;
+	ctx.drawImage(Resources.get(this.sprite), x, y);
 };
 
 //Using the arrow keys, move Player 1 tile from current position
@@ -179,6 +238,11 @@ Player.prototype.handleInput = function(key) {
 			this.nextSprite();
 			this.setSprite();
 			break;
+	}
+
+	if (key !== 'c') {
+		this.setCurrentCenterX();  //if player moved, update his center value
+		//do this here instead of in update to save on unnecessary calls (since this changes less frequently)
 	}
 };
 
@@ -227,16 +291,23 @@ document.querySelector('#canvas').addEventListener('mousedown', function(event) 
 	var tileCol = Math.floor(event.offsetX / COL_WIDTH);
 	//y is a little awkward due to the transparency included in the tile graphics
 	//In effect, it's like there's an extra 60%-row of padding at the top of the canvas
-	var tileRow = Math.floor((event.offsetY - ROW_HEIGHT * .60) / ROW_HEIGHT);
+	var tileRow = Math.floor((event.offsetY - ROW_HEIGHT * 0.60) / ROW_HEIGHT);
 
 	if (tileRow >= 0 && tileRow < MAX_ROW_INDEX + 1) {  //weed out any clicks not on the actual tiles
 		player.handleClicks(tileCol, tileRow);
 	}
-
 });
+
+//possible TODO:  set up touch listeners for mobile devices
+  //Source help:  http://www.homeandlearn.co.uk/JS/html5_canvas_touch_events.html
 
 //returns a random integer between the provided range, inclusively
 function getRandomInt(min, max) {
 	max++; //to make the max inclusive
 	return Math.floor(Math.random() * (max - min)) + min;
 }
+
+
+//stil TODO basics:
+//hit detection - death / loss of heart
+//finishline - win
