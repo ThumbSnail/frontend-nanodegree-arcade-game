@@ -29,6 +29,9 @@ var MAX_ROW_INDEX = 5;	// 1
 
 //Game constants:
 var MAX_ENEMIES = 10;
+var GOAL_POINTS = 2;
+var PLAYER_LIVES = 3;
+var GEM_POINTS = 3;
 
 /*
  *
@@ -138,7 +141,7 @@ Enemy.prototype.detectCollision = function() {
 			player.lives--;
 			stats.render();  //update the number of hearts shown on this display
 			if (player.lives === 0) {
-				//TODO: game over
+				stats.gameOver();
 			}
 		}
 	}
@@ -172,6 +175,9 @@ var Player = function() {
 
 	//for animation:
 	this.rotation = 0;  //radians, used to spin player in circle after being hit
+
+	//for goal detection:
+	this.finished = false;  //turns true when crosses finish line (the water tiles)
 };
 
 /* Player Constants */
@@ -219,11 +225,14 @@ Player.prototype.setCurrentCenterX = function() {
 
 //TODO Looks for collisions on special items
 //Looks to see if over water (ie, won the round)
-Player.prototype.update = function(dt) {
-	if (this.row === 0) {  //if made it to the finish line (the water)
+Player.prototype.update = function() {
+	if (!this.finished && this.row === 0) {  //if made it to the finish line (the water)
 		//TODO:  up the score, reset player position, put stars in the water (remove when player makes first move)
+		star.setCol(this.col);  //place the star where the player crossed the goal line
+		this.finished = true;  //scored a goal!  Show a gold star
+		stats.updateScore(GOAL_POINTS);  //update the score
+		this.placeAtStart();  //reset player position
 	}
-
 };
 
 //Draw the player on the screen, first converting from tile coords to px (x,y)
@@ -263,6 +272,10 @@ Player.prototype.animateSpin = function(y) {
 //Also prevents player from moving off the game screen
 //The 'c' key is used to swap character sprites
 Player.prototype.handleInput = function(key) {
+	if (this.finished) {
+		this.finished = false;  //remove the 'hey, you scored!' feedback; that is, stop rendering the star
+	}
+
 	if (!this.wasHit) {  //don't allow movement when death animation is occurring
 		switch(key) {
 			case 'left':
@@ -291,9 +304,20 @@ Player.prototype.handleInput = function(key) {
 };
 
 //Player can also use the mouse with the same functionality
-//as the keyboard.  (minus the c-key to change portraits, obviously)
+//as the keyboard.  (but to change portraits, click the character.  [no c key obviously])
 Player.prototype.handleClicks = function(tileCol, tileRow) {
+	if (this.finished) {
+		this.finished = false;  //remove the 'hey, you scored!' feedback; that is, stop rendering the star
+	}
+
 	if (!this.wasHit) {  //don't allow movement when death animation is occurring
+
+		//To switch character sprites when playing only with mouse:
+		if (tileCol === this.col && tileRow === this.row) {  //if clicked directly ON the player
+			this.nextSprite();  //swap to the next character sprite
+			this.setSprite();
+		}
+
 		var nearX = tileCol - this.col;
 		var nearY = tileRow - this.row;
 
@@ -379,14 +403,49 @@ Stats.prototype.renderScores = function() {
 };
 
 //Increases the current game's score by the value passed in
-Stats.prototype.updateScore = function(add) {
-
+Stats.prototype.updateScore = function(val) {
+	this.score += val;
+	this.render();  //update the labels
 };
 
 //updates the player's best ever score upon game finish if it's a new record
 Stats.prototype.updateHigh = function() {
-
+	if (this.high < this.score) {
+		this.high = this.score;
+	}
 }
+
+Stats.prototype.gameOver = function() {
+	this.updateHigh();  //check to see if there was a high score
+	player.lives = PLAYER_LIVES;  //reset player lives to beginning amount
+	this.score = 0;  //reset score
+	this.render();  //update the display
+}
+
+/*
+ *
+ * Star Class
+ *
+*/
+
+var Star = function() {
+	this.sprite = 'images/Star.png';
+
+	this.finalCol;  //column to place the star in (the water tile the player steps on)
+	this.Y_OFFSET = -1 * Math.floor(.025 * COL_WIDTH);  //due to transparency, shift star to center
+};
+
+//Once player reaches the water, give him/her a gold star
+Star.prototype.render = function() {
+	if (player.finished) {  //only when player has scored a goal (reached the water)
+		ctx.drawImage(Resources.get(this.sprite), this.finalCol * COL_WIDTH, this.Y_OFFSET);
+	}
+};
+
+//Save the col position of the water tile the player stepped on to score
+Star.prototype.setCol = function(col) {
+	this.finalCol = col;
+};
 
 /*
  *
@@ -405,6 +464,8 @@ for (var i = 0; i < MAX_ENEMIES; i++) {
 var player = new Player();
 
 var stats = new Stats();
+
+var star = new Star();
 
 /*
  *
@@ -458,24 +519,14 @@ function getRandomInt(min, max) {
 
 
 //still TODO basics:
-//hit detection - death / loss of heart  (maybe you get 3 lives/hearts)
-   //^So, back to start line, remove heart, is there a way to provide better feedback to the player?:
-     //turn the water red and/or spin the character around before just warping him back to start?
-//finishline - win
-  //better player feedback idea == maybe put the star graphics over the water (and spin?)
-    //^Then, upon their next move == remove the stars so they can see the water easily
 //update README  (you could also put the instruction in the html, too)
 
 //advanced TODOs:
-//display score.  update score upon reaching the water.
-  //display the lives/hearts
-    //possibly display icon of last gem picked up?
+
  //haha, add 'tweet high score' button?  (Can you save a picture of the canvas?)
 //mobile device touch listener?
   //^Likewise, is it possible to make this game responsive?  Can you scale down everything on a 
     //canvas to make it fit on the screen?
-
-//for mouse / touch == if you click/tap on the character's tile, maybe THAT should change the sprite image?
 
 //optimize graphics by using spritesheets?  (whole lotta extra work though...)
 
@@ -485,6 +536,7 @@ function getRandomInt(min, max) {
   		//  -condense all the enemies down to being on one row (prob too hard), or two rows?
   		//  -increase enemy speed?
   		//  -rocks fall down and block some of the water exits?
+  		//  -the gem prevents you from moving backwards?
 
   		// either a gem or just a 'once score reaches threshold' thing:  add another row of stones
   		   //and increase the number of enemies in the game?

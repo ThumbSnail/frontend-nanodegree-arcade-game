@@ -164,6 +164,8 @@ var Engine = (function(global) {
 
 		//stats.render();  //NO, don't do this here.  The text keeps drawing over itself, looking blurry.
 		  //Plus, this doesn't change that often anyways
+
+		star.render();  //only does something when player crosses the finish line (the water)
 	}
 
 	/* This function does nothing but it could have been a good place to
