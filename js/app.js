@@ -38,8 +38,6 @@ var MAX_ENEMIES = 10;
 
 // Enemies our player must avoid
 var Enemy = function() {
-	this.sprite = 'images/enemy-bug.png';  //enemy image
-	
 	//for position:
 	this.x, this.row;  //row is (y) in tile coords
 	this.spawn(SCREEN_WIDTH);  //set up the position variables
@@ -55,6 +53,8 @@ var Enemy = function() {
 
 /* Enemy Constants and Common Variables */
 
+//For graphics:
+Enemy.prototype.sprite = 'images/enemy-bug.png';  //enemy image
 //For hit detection:
 Enemy.prototype.RADIUS = Math.floor(0.40 * COL_WIDTH);  //use most of the bug for hit detection
 Enemy.prototype.CENTER_X = Math.floor(COL_WIDTH / 2);  //the center of the bug's body
@@ -135,6 +135,11 @@ Enemy.prototype.detectCollision = function() {
 		var bothRadii = this.RADIUS + player.RADIUS;
 		if (distance < bothRadii) {
 			player.wasHit = true;
+			player.lives--;
+			stats.render();  //update the number of hearts shown on this display
+			if (player.lives === 0) {
+				//TODO: game over
+			}
 		}
 	}
 };
@@ -163,6 +168,7 @@ var Player = function() {
 	this.currentCenterX;  //it's center when taking account its current position
 	this.setCurrentCenterX();  //set this value
 	this.wasHit = false;  //bool used for animation
+	this.lives = 3;  //3 hits before game over
 
 	//for animation:
 	this.rotation = 0;  //radians, used to spin player in circle after being hit
@@ -303,6 +309,87 @@ Player.prototype.handleClicks = function(tileCol, tileRow) {
 
 /*
  *
+ * Stats Class (lives, score, high score)
+ *
+*/
+
+var Stats = function() {
+	this.heartSprite = 'images/Heart.png';  //represents the player's lives
+	this.scale = 0.40;  //since the heart graphic is too big to fit
+
+	//Score label:
+	this.scoreLabel = 'Score';
+	this.scoreLabelX = Math.floor(2.5 * COL_WIDTH); //x location to render
+	this.scoreLabelY = 0; //y location to render
+
+	//Score:
+	this.score = 0;  //current game score
+	this.scoreY = Math.floor(0.25 * ROW_HEIGHT);  //y location to render (x is same as above label)
+
+	//High Score label:
+	this.highLabel = 'High';
+	this.highLabelX = Math.floor(4.5 * COL_WIDTH); //x location to render
+	this.highLabelY = 0; //y location to render
+
+	//High Score:
+	this.high = 0;  //best score ever
+	//x location same as label, y location same as score
+
+	//Aesthetics:
+	this.labelColor = '#777';
+	this.scoreColor = '#000';
+	this.labelFont = '12pt Tahoma, sans-serif';
+	this.scoreFont = '16pt Tahoma, sans-serif';
+};
+
+//Render all the stats information, at the top of the canvas, but outside the tile area
+Stats.prototype.render = function() {
+	ctx.clearRect(0, 0, SCREEN_WIDTH, ROW_HEIGHT * .50);
+	this.renderHearts();
+	this.renderLabels();
+	this.renderScores();
+};
+
+//Draws a heart to represent each of the player's lives
+Stats.prototype.renderHearts = function() {
+	ctx.save();
+	ctx.scale(this.scale, this.scale);
+	for (var i = 0; i < player.lives; i++) {
+		ctx.drawImage(Resources.get(this.heartSprite), i * COL_WIDTH, -ROW_HEIGHT * this.scale);
+	}
+	ctx.restore(); //reset
+};
+
+//sets the style for and then draws the text for both labels
+Stats.prototype.renderLabels = function() {
+	ctx.fillStyle = this.labelColor;
+	ctx.font = this.labelFont;
+
+	ctx.fillText(this.scoreLabel, this.scoreLabelX, this.scoreLabelY);  //score
+	ctx.fillText(this.highLabel, this.highLabelX, this.highLabelY);  //high
+};
+
+//Sets the style for and then draws the text for both score types
+Stats.prototype.renderScores = function() {
+	ctx.fillStyle = this.scoreColor;
+	ctx.font = this.scoreFont;
+
+	ctx.fillText(this.score, this.scoreLabelX, this.scoreY);  //score
+	ctx.fillText(this.high, this.highLabelX, this.scoreY);  //high
+};
+
+//Increases the current game's score by the value passed in
+Stats.prototype.updateScore = function(add) {
+
+};
+
+//updates the player's best ever score upon game finish if it's a new record
+Stats.prototype.updateHigh = function() {
+
+}
+
+/*
+ *
  * Object Instantiation
  *
 */
@@ -314,7 +401,10 @@ var allEnemies = [];
 for (var i = 0; i < MAX_ENEMIES; i++) {
 	allEnemies.push(new Enemy());
 }
+
 var player = new Player();
+
+var stats = new Stats();
 
 /*
  *
@@ -384,6 +474,9 @@ function getRandomInt(min, max) {
 //mobile device touch listener?
   //^Likewise, is it possible to make this game responsive?  Can you scale down everything on a 
     //canvas to make it fit on the screen?
+
+//for mouse / touch == if you click/tap on the character's tile, maybe THAT should change the sprite image?
+
 //optimize graphics by using spritesheets?  (whole lotta extra work though...)
 
 //Gems:  increase your score AND have some effect on the game play

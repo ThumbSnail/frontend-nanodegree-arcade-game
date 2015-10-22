@@ -30,6 +30,10 @@ var Engine = (function(global) {
 	canvas.height = SCREEN_HEIGHT;
 	//doc.body.appendChild(canvas);
 
+	//Make text easier to position:
+	ctx.textAlign = 'center';
+	ctx.textBaseline = 'top';
+
 	/* This function serves as the kickoff point for the game loop itself
 	 * and handles properly calling the update and render methods.
 	 */
@@ -68,6 +72,7 @@ var Engine = (function(global) {
 	 */
 	function init() {
 		reset();
+		stats.render();  //draw the text ONCE (...not every tick)
 		lastTime = Date.now();
 		main();
 	}
@@ -156,6 +161,9 @@ var Engine = (function(global) {
 		});
 
 		player.render();
+
+		//stats.render();  //NO, don't do this here.  The text keeps drawing over itself, looking blurry.
+		  //Plus, this doesn't change that often anyways
 	}
 
 	/* This function does nothing but it could have been a good place to
@@ -180,7 +188,8 @@ var Engine = (function(global) {
 		player.SPRITES[2],
 		player.SPRITES[3],
 		player.SPRITES[4],
-		'images/star.png'
+		'images/Star.png',
+		'images/Heart.png'
 	]);
 	Resources.onReady(init);
 
