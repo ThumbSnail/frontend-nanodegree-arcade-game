@@ -217,6 +217,7 @@ Player.prototype.nextSprite = function() {
 Player.prototype.placeAtStart = function() {
 	this.col = this.START_COL;
 	this.row = this.START_ROW;
+	this.setCurrentCenterX()
 }
 
 //Updates the player's current center (its center in relation to its position on the map)
@@ -230,6 +231,7 @@ Player.prototype.setCurrentCenterX = function() {
 Player.prototype.update = function() {
 	//if made it to the finish line (the water)
 	if (!this.finished && this.row === 0) {
+		gem.gemEffect = -1;  //reset in case player picked up a gem this round
 		star.setCol(this.col);  //place the star where the player crossed the goal line
 		this.finished = true;  //scored a goal!  Show a gold star
 		stats.updateScore(GOAL_POINTS);  //update the score
@@ -253,8 +255,15 @@ Player.prototype.render = function() {
 	if (this.wasHit) {  //render spinning animation
 		this.animateSpin(y);
 	}
-	else {  //render normally, without animation
+	else { 
+		//render normally, without animation
 		ctx.drawImage(Resources.get(this.sprite), x, y);
+
+		//if orange gem was collected, player CANNOT move backwards
+		//thus, draw a red x behind him to make it more clear what's in effect
+		if (gem.gemEffect != undefined && gem.gemEffect === gem.ORANGE) {
+			this.drawRedX(y);
+		}
 	}
 };
 
@@ -278,12 +287,26 @@ Player.prototype.animateSpin = function(y) {
 	}
 };
 
+//Draws a big red 'X' at the player's feet to inform him/her that they cannont move backwards now
+  //(Because they picked up an orange gem this round)
+Player.prototype.drawRedX = function(y) {
+	ctx.fillStyle = '#f00';
+	ctx.font = '40pt Tahoma, sans-serif';
+
+	ctx.fillText('X', this.currentCenterX, y + ROW_HEIGHT * 1.50);
+};
+
 //Using the arrow keys, move Player 1 tile from current position
 //Also prevents player from moving off the game screen
 //The 'c' key is used to swap character sprites
 Player.prototype.handleInput = function(key) {
 	if (this.finished) {
 		this.finished = false;  //remove the 'hey, you scored!' feedback; that is, stop rendering the star
+	}
+
+	//if an orange gem was picked up, prevent the player from moving backwards
+	if (gem.gemEffect === gem.ORANGE && key === 'down') {
+		return;
 	}
 
 	if (!this.wasHit) {  //don't allow movement when death animation is occurring
@@ -330,6 +353,11 @@ Player.prototype.handleClicks = function(tileCol, tileRow) {
 
 		var nearX = tileCol - this.col;
 		var nearY = tileRow - this.row;
+
+		//if an orange gem was picked up, prevent the player from moving backwards
+		if (gem.gemEffect === gem.ORANGE && nearY === 1) {
+			return;
+		}
 
 		//move if clicked on an adjacent (including diagonal) tile
 		if ((nearX >= -1 && nearX <= 1) && (nearY >= -1 && nearY <= 1)) {
@@ -430,6 +458,7 @@ Stats.prototype.gameOver = function() {
 	player.lives = PLAYER_LIVES;  //reset player lives to beginning amount
 	this.score = 0;  //reset score
 	this.render();  //update the display
+	gem.gemEffect = -1;  //remove the gemEffect if there was any
 	gem.spawn();  //spawn a new gem
 }
 
@@ -467,9 +496,9 @@ Star.prototype.setCol = function(col) {
 var Gem = function() {
 	//graphics:
 	this.sprites = [
-		'images/Gem Blue.png',
-		'images/Gem Green.png',
-		'images/Gem Orange.png'
+		'images/Gem Blue.png',  // 0
+		'images/Gem Green.png', // 1
+		'images/Gem Orange.png' // 2
 	];
 
 	//type:
@@ -485,7 +514,16 @@ var Gem = function() {
 
 	//detection/collision
 	this.inPlay;  //true when live, turns false after being picked up
+
+	//status effect
+	this.gemEffect = -1;  //-1 is none, otherwise matches its type when picked up
 };
+
+//Gem constants (to allow for easier readability)
+Gem.prototype.BLUE = 0;
+Gem.prototype.GREEN = 1;
+Gem.prototype.ORANGE = 2;
+
 
 //Creates a gem:  chooses its location and its type
 Gem.prototype.spawn = function() {
@@ -510,7 +548,8 @@ Gem.prototype.randomPosition = function() {
 
 //Choose a random gem type from the set of available gem sprites
 Gem.prototype.randomType = function() {
-	this.type = getRandomInt(0, this.sprites.length - 1);
+	//this.type = getRandomInt(0, this.sprites.length - 1);
+	this.type = 2;
 };
 
 //draws the sprite on the map, converts from tile coords to px
@@ -521,8 +560,11 @@ Gem.prototype.render = function() {
 };
 
 //Based on the gem type, cause a different change to the gameplay
+//blue (0):  rocks form in the water and block goal line exits
+//green (1):  switches direction of the enemies
+//orange (2):  prevents player from moving backwards
 Gem.prototype.statusEffect = function() {
-
+	this.gemEffect = this.type;
 };
 
 /*
@@ -609,6 +651,9 @@ function getRandomInt(min, max) {
 
 //still TODO basics:
 //update README  (you could also put the instruction in the html, too)
+  //AND IN THE project notes === you GOTTA tell them that the orange gem INTENTIONALLY prevents moving backwards
+  	//otherwise, they might view it as a fatal error/flaw.
+  	  //Maybe I should have it draw a red 'x' behind them, too?  Just to be safe?
 
 //advanced TODOs:
 
@@ -618,13 +663,13 @@ function getRandomInt(min, max) {
 
 //optimize graphics by using spritesheets?  (whole lotta extra work though...)
 
-//Gems:  increase your score AND have some effect on the game play
-  //ideas:  -reverse the direction of the enemy movement?
+//Gems: 
+  //ideas:  -reverse the direction of the enemy movement?  === the green gem
   		//  -could the bugs move down the columns?
   		//  -condense all the enemies down to being on one row (prob too hard), or two rows?
   		//  -increase enemy speed?
-  		//  -rocks fall down and block some of the water exits?
-  		//  -the gem prevents you from moving backwards?
+  		//  -rocks fall down and block some of the water exits?  === the blue gem
+  		//  -the gem prevents you from moving backwards?  === the orange gem
 
   		// either a gem or just a 'once score reaches threshold' thing:  add another row of stones
   		   //and increase the number of enemies in the game?
