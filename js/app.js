@@ -90,6 +90,13 @@ Enemy.prototype.spawn = function(maxRange) {
 	}
 };
 
+//My nice function won't work for the green gem's special effect.  In that case,
+//you need this other function to spawn bugs off the RIGHT side of the screen:
+Enemy.prototype.spawnReverse = function() {
+	this.x = SCREEN_WIDTH + COL_WIDTH + getRandomInt(0, 30);  //stick offscreen right + variance
+	this.row = getRandomInt(this.enemyHighestRow, this.enemyLowestRow);  //choose a row
+}
+
 //set the additional speed factor of this enemy
 Enemy.prototype.setRandomSpeed = function() {
 	this.speed = getRandomInt(this.MIN_SPEED, this.MAX_SPEED);
@@ -107,7 +114,27 @@ Enemy.prototype.update = function(dt) {
 	// which will ensure the game runs at the same speed for
 	// all computers.
 
-	this.x += this.speed * this.DEFAULT_SPEED * dt; //distance travelled
+	//if the player has picked up a green gem previously, switch the direction of the bugs' movement
+	if (gem.gemEffect != undefined && gem.gemEffect == gem.GREEN) {
+		//update oppositely, travel to the left
+		this.x -= this.speed * this.DEFAULT_SPEED * dt; //distance travelled
+
+		//bounds check:
+		if (this.x <  -COL_WIDTH) {  //bounds:  once fully offscreen LEFT
+			this.spawnReverse();  //reset to offscreen RIGHT plus a little variance
+			this.setRandomSpeed();  //assign a new random speed
+		}
+	}
+	else {  
+		//update normally, travel to the right
+		this.x += this.speed * this.DEFAULT_SPEED * dt; //distance travelled
+
+		//bounds check:
+		if (this.x > (SCREEN_WIDTH + COL_WIDTH)) {  //once fully offscreen right
+			this.spawn(-COL_WIDTH / 2);  //reset to offscreen left plus a little variance
+			this.setRandomSpeed();  //assign a new random speed
+		}
+	}
 
 	this.setCurrentCenterX();  //keep track of its center relative to the map
 
@@ -549,7 +576,7 @@ Gem.prototype.randomPosition = function() {
 //Choose a random gem type from the set of available gem sprites
 Gem.prototype.randomType = function() {
 	//this.type = getRandomInt(0, this.sprites.length - 1);
-	this.type = 2;
+	this.type = 1;
 };
 
 //draws the sprite on the map, converts from tile coords to px
@@ -561,7 +588,7 @@ Gem.prototype.render = function() {
 
 //Based on the gem type, cause a different change to the gameplay
 //blue (0):  rocks form in the water and block goal line exits
-//green (1):  switches direction of the enemies
+//green (1):  switches direction of the enemies (moonwalking bugs!!!)
 //orange (2):  prevents player from moving backwards
 Gem.prototype.statusEffect = function() {
 	this.gemEffect = this.type;
