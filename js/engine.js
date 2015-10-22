@@ -99,10 +99,10 @@ var Engine = (function(global) {
 	 * render methods.
 	 */
 	function updateEntities(dt) {
+		player.update();  //update player first to more fairly handle gem scoring
 		allEnemies.forEach(function(enemy) {
 			enemy.update(dt);
 		});
-		player.update();
 	}
 
 	/* This function initially draws the "game level", it will then call
@@ -156,6 +156,9 @@ var Engine = (function(global) {
 		/* Loop through all of the objects within the allEnemies array and call
 		 * the render function you have defined.
 		 */
+		//draw the gem first so that it is drawn beneath the enemies and players
+		gem.render();  //draws as long as player hasn't already collected it
+
 		allEnemies.forEach(function(enemy) {
 			enemy.render();
 		});
@@ -191,7 +194,10 @@ var Engine = (function(global) {
 		player.SPRITES[3],
 		player.SPRITES[4],
 		'images/Star.png',
-		'images/Heart.png'
+		'images/Heart.png',
+		'images/Gem Blue.png',
+		'images/Gem Green.png',
+		'images/Gem Orange.png'
 	]);
 	Resources.onReady(init);
 

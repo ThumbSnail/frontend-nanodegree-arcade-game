@@ -67,7 +67,7 @@ Enemy.prototype.enemyHighestRow = 1;
 Enemy.prototype.enemyLowestRow = 3;
 //For speed:
 Enemy.prototype.MIN_SPEED = 1;
-Enemy.prototype.MAX_SPEED = 6;
+Enemy.prototype.MAX_SPEED = 8;
 Enemy.prototype.DEFAULT_SPEED = 20; //px
 
 /* Enemy Methods */
@@ -141,6 +141,7 @@ Enemy.prototype.detectCollision = function() {
 			player.lives--;
 			stats.render();  //update the number of hearts shown on this display
 			if (player.lives === 0) {
+				gem.inPlay = false;  //remove the current gem (if any)
 				stats.gameOver();
 			}
 		}
@@ -188,7 +189,7 @@ Player.prototype.CENTER_X = Math.floor(COL_WIDTH / 2);  //the center of the play
 Player.prototype.CENTER_Y = COL_WIDTH;  //it's actually about 100 px down from the top, so just use COL_WIDTH
 Player.prototype.RADIUS = Math.floor(0.163 * COL_WIDTH);  //half the player's body is about 16px wide
 //For positioning:
-Player.prototype.Y_OFFSET = -13;  //to center the sprites on a tile, shove up by this many px
+Player.prototype.Y_OFFSET = -1 * Math.floor(.13 * COL_WIDTH);  //to center the sprites on a tile
 Player.prototype.START_COL = 2;  //starting position tile x
 Player.prototype.START_ROW = 5;  //starting position tile y
 //For character graphic:
@@ -223,15 +224,24 @@ Player.prototype.setCurrentCenterX = function() {
 	this.currentCenterX = this.col * COL_WIDTH + this.CENTER_X;
 };
 
-//TODO Looks for collisions on special items
-//Looks to see if over water (ie, won the round)
+//Looks to see if player has stepped on a special tile or item
+//If the player reaches the finish, it triggers all the "scored a goal"-related matters
+//If the player reaches a gem, it triggers all the gem-related matters
 Player.prototype.update = function() {
-	if (!this.finished && this.row === 0) {  //if made it to the finish line (the water)
-		//TODO:  up the score, reset player position, put stars in the water (remove when player makes first move)
+	//if made it to the finish line (the water)
+	if (!this.finished && this.row === 0) {
 		star.setCol(this.col);  //place the star where the player crossed the goal line
 		this.finished = true;  //scored a goal!  Show a gold star
 		stats.updateScore(GOAL_POINTS);  //update the score
 		this.placeAtStart();  //reset player position
+		gem.spawn();  //spawn a new gem for this next 'level'
+	}
+
+	//if stepped on a gem:
+	if (gem.inPlay && gem.col === this.col && gem.row == this.row) {
+		gem.inPlay = false;  //no longer render the gem
+		stats.updateScore(GEM_POINTS);  //increase score
+		gem.statusEffect();  //trigger the gem's additional effect
 	}
 };
 
@@ -420,11 +430,12 @@ Stats.prototype.gameOver = function() {
 	player.lives = PLAYER_LIVES;  //reset player lives to beginning amount
 	this.score = 0;  //reset score
 	this.render();  //update the display
+	gem.spawn();  //spawn a new gem
 }
 
 /*
  *
- * Star Class
+ * Star Class  (Feeback for scoring a goal)
  *
 */
 
@@ -449,6 +460,73 @@ Star.prototype.setCol = function(col) {
 
 /*
  *
+ * Gem Class
+ *
+*/
+
+var Gem = function() {
+	//graphics:
+	this.sprites = [
+		'images/Gem Blue.png',
+		'images/Gem Green.png',
+		'images/Gem Orange.png'
+	];
+
+	//type:
+	this.type;  //serves as an index for the graphic, plus determines status effect
+
+	//position:
+	this.col;  //x pos in tile coord
+	this.row;  //y pos in tile coord
+	this.x;  //x in px
+	this.y;  //y in px
+	this.Y_OFFSET = -1 * Math.floor(.13 * COL_WIDTH);  //to center the sprites on a tile
+	this.spawn();  //setups a gem
+
+	//detection/collision
+	this.inPlay;  //true when live, turns false after being picked up
+};
+
+//Creates a gem:  chooses its location and its type
+Gem.prototype.spawn = function() {
+	this.randomPosition();
+	this.randomType();
+	this.inPlay = true;
+};
+
+//Places the gem on a random tile that's NOT where the player starts
+Gem.prototype.randomPosition = function() {
+	this.col = getRandomInt(0, MAX_COL_INDEX);
+	this.row = getRandomInt(1, MAX_ROW_INDEX);  //1 so that it's not in the water
+
+	//don't place a gem right on the player's starting position
+	if (this.col === player.START_COL && this.row == player.START_ROW) {
+		this.randomPosition();  //try again!
+	}
+
+	this.x = this.col * COL_WIDTH;
+	this.y = this.row * ROW_HEIGHT + this.Y_OFFSET;
+};
+
+//Choose a random gem type from the set of available gem sprites
+Gem.prototype.randomType = function() {
+	this.type = getRandomInt(0, this.sprites.length - 1);
+};
+
+//draws the sprite on the map, converts from tile coords to px
+Gem.prototype.render = function() {
+	if (this.inPlay) {  //draw only if player hasn't already picked up
+		ctx.drawImage(Resources.get(this.sprites[this.type]), this.x, this.y);
+	}
+};
+
+//Based on the gem type, cause a different change to the gameplay
+Gem.prototype.statusEffect = function() {
+
+};
+
+/*
+ *
  * Object Instantiation
  *
 */
@@ -466,6 +544,8 @@ var player = new Player();
 var stats = new Stats();
 
 var star = new Star();
+
+var gem = new Gem();
 
 /*
  *
@@ -518,15 +598,23 @@ function getRandomInt(min, max) {
 }
 
 
+/* List of Added Extras:
+  -switch character sprites
+  -mouse input
+  -animations (collision) / star appears upon goal scored
+  -a lives (hearts) system
+  -score/high score
+  -gem collection for extra points
+*/
+
 //still TODO basics:
 //update README  (you could also put the instruction in the html, too)
 
 //advanced TODOs:
 
- //haha, add 'tweet high score' button?  (Can you save a picture of the canvas?)
 //mobile device touch listener?
   //^Likewise, is it possible to make this game responsive?  Can you scale down everything on a 
-    //canvas to make it fit on the screen?
+    //canvas to make it fit on the screen?  And then update all the constants?
 
 //optimize graphics by using spritesheets?  (whole lotta extra work though...)
 
