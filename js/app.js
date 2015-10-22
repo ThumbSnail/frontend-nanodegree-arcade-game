@@ -127,14 +127,14 @@ Enemy.prototype.render = function() {
   //This still uses the idea of circle collision, but since the player and enemy MUST be
   //in the same row, the math is simpler.
 Enemy.prototype.detectCollision = function() {
-	if (this.row == player.row) { //only check if enemy is in same row as player
+	if (this.row == player.row && !player.wasHit) { //only check if enemy is in same row as player
 		//there's a collision when "the distance between the center points of the two sprites is less than
 		//their radii added together"
 
 		var distance = Math.abs(this.currentCenterX - player.currentCenterX);
 		var bothRadii = this.RADIUS + player.RADIUS;
 		if (distance < bothRadii) {
-			player.placeAtStart();
+			player.wasHit = true;
 		}
 	}
 };
@@ -162,12 +162,18 @@ var Player = function() {
 	//for hit detection:
 	this.currentCenterX;  //it's center when taking account its current position
 	this.setCurrentCenterX();  //set this value
+	this.wasHit = false;  //bool used for animation
+
+	//for animation:
+	this.rotation = 0;  //radians, used to spin player in circle after being hit
 };
 
 /* Player Constants */
 
 //For hit detection:
 Player.prototype.CENTER_X = Math.floor(COL_WIDTH / 2);  //the center of the player's body
+//For animation:
+Player.prototype.CENTER_Y = COL_WIDTH;  //it's actually about 100 px down from the top, so just use COL_WIDTH
 Player.prototype.RADIUS = Math.floor(0.163 * COL_WIDTH);  //half the player's body is about 16px wide
 //For positioning:
 Player.prototype.Y_OFFSET = -13;  //to center the sprites on a tile, shove up by this many px
@@ -218,30 +224,58 @@ Player.prototype.update = function(dt) {
 Player.prototype.render = function() {
 	var x = this.col * COL_WIDTH;
 	var y = this.row * ROW_HEIGHT + this.Y_OFFSET;
-	ctx.drawImage(Resources.get(this.sprite), x, y);
+
+	if (this.wasHit) {  //render spinning animation
+		this.animateSpin(y);
+	}
+	else {  //render normally, without animation
+		ctx.drawImage(Resources.get(this.sprite), x, y);
+	}
+};
+
+//Source help:  http://stackoverflow.com/questions/2677671/how-do-i-rotate-a-single-object-on-an-html-5-canvas
+//Since I don't keep track of currentCenterY, this takes the current y position as an argument
+Player.prototype.animateSpin = function(y) {
+	this.rotation += 0.025 * 2 * Math.PI;  //rotate 9 degrees per cycle
+
+	if (this.rotation > 2 * Math.PI) {  //circle complete, animation over
+		//reset player
+		this.rotation = 0;
+		this.wasHit = false;
+		this.placeAtStart();
+	}
+	else {  //draw the next step in the rotation
+		ctx.save();
+		ctx.translate(this.currentCenterX, y + this.CENTER_Y);
+		ctx.rotate(this.rotation);
+		ctx.drawImage(Resources.get(this.sprite), - this.CENTER_X, -this.CENTER_Y);
+		ctx.restore();  //reset
+	}
 };
 
 //Using the arrow keys, move Player 1 tile from current position
 //Also prevents player from moving off the game screen
 //The 'c' key is used to swap character sprites
 Player.prototype.handleInput = function(key) {
-	switch(key) {
-		case 'left':
-			this.col > 0 ? this.col-- : this.col = 0;
-			break;
-		case 'right':
-			this.col < MAX_COL_INDEX ? this.col++ : this.col = MAX_COL_INDEX;
-			break;
-		case 'up':
-			this.row > 0 ? this.row-- : this.row = 0;
-			break;
-		case 'down':
-			this.row < MAX_ROW_INDEX ? this.row++ : this.row = MAX_ROW_INDEX;
-			break;
-		case 'c':
-			this.nextSprite();
-			this.setSprite();
-			break;
+	if (!this.wasHit) {  //don't allow movement when death animation is occurring
+		switch(key) {
+			case 'left':
+				this.col > 0 ? this.col-- : this.col = 0;
+				break;
+			case 'right':
+				this.col < MAX_COL_INDEX ? this.col++ : this.col = MAX_COL_INDEX;
+				break;
+			case 'up':
+				this.row > 0 ? this.row-- : this.row = 0;
+				break;
+			case 'down':
+				this.row < MAX_ROW_INDEX ? this.row++ : this.row = MAX_ROW_INDEX;
+				break;
+			case 'c':
+				this.nextSprite();
+				this.setSprite();
+				break;
+		}
 	}
 
 	if (key !== 'c') {
@@ -253,15 +287,17 @@ Player.prototype.handleInput = function(key) {
 //Player can also use the mouse with the same functionality
 //as the keyboard.  (minus the c-key to change portraits, obviously)
 Player.prototype.handleClicks = function(tileCol, tileRow) {
-	var nearX = tileCol - this.col;
-	var nearY = tileRow - this.row;
+	if (!this.wasHit) {  //don't allow movement when death animation is occurring
+		var nearX = tileCol - this.col;
+		var nearY = tileRow - this.row;
 
-	//move if clicked on an adjacent (including diagonal) tile
-	if ((nearX >= -1 && nearX <= 1) && (nearY >= -1 && nearY <= 1)) {
-		this.col = tileCol;
-		this.row = tileRow;
-		this.setCurrentCenterX();  //if player moved, update his center value
-		//do this here instead of in update() to save on unnecessary calls (since this changes less frequently)
+		//move if clicked on an adjacent (including diagonal) tile
+		if ((nearX >= -1 && nearX <= 1) && (nearY >= -1 && nearY <= 1)) {
+			this.col = tileCol;
+			this.row = tileRow;
+			this.setCurrentCenterX();  //if player moved, update his center value
+			//do this here instead of in update() to save on unnecessary calls (since this changes less frequently)
+		}
 	}
 };
 
