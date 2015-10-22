@@ -260,6 +260,8 @@ Player.prototype.handleClicks = function(tileCol, tileRow) {
 	if ((nearX >= -1 && nearX <= 1) && (nearY >= -1 && nearY <= 1)) {
 		this.col = tileCol;
 		this.row = tileRow;
+		this.setCurrentCenterX();  //if player moved, update his center value
+		//do this here instead of in update() to save on unnecessary calls (since this changes less frequently)
 	}
 };
 
@@ -329,6 +331,27 @@ function getRandomInt(min, max) {
 }
 
 
-//stil TODO basics:
-//hit detection - death / loss of heart
+//still TODO basics:
+//hit detection - death / loss of heart  (maybe you get 3 lives/hearts)
+   //^So, back to start line, remove heart, is there a way to provide better feedback to the player?:
+     //turn the water red and/or spin the character around before just warping him back to start?
 //finishline - win
+  //better player feedback idea == maybe put the star graphics over the water (and spin?)
+    //^Then, upon their next move == remove the stars so they can see the water easily
+//update README  (you could also put the instruction in the html, too)
+
+//advanced TODOs:
+//display score.  update score upon reaching the water.
+  //display the lives/hearts
+    //possibly display icon of last gem picked up?
+ //haha, add 'tweet high score' button?  (Can you save a picture of the canvas?)
+
+//Gems:  increase your score AND have some effect on the game play
+  //ideas:  -reverse the direction of the enemy movement?
+  		//  -could the bugs move down the columns?
+  		//  -condense all the enemies down to being on one row (prob too hard), or two rows?
+  		//  -increase enemy speed?
+  		//  -rocks fall down and block some of the water exits?
+
+  		// either a gem or just a 'once score reaches threshold' thing:  add another row of stones
+  		   //and increase the number of enemies in the game?
