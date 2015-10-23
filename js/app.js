@@ -27,12 +27,14 @@ var MAX_ROW_INDEX = 5;	// 1
 						// 4
 						// 5
 
-//Game constants:
-var MAX_ENEMIES = 10;
-var GOAL_POINTS = 2;
+//Game constants and variables:
+var STARTING_ENEMIES = 10;
+var MAX_ENEMIES = 15;  //can increase to this as difficulty goes up
+var goalPoints = 2;  //can increase up to 7
 var PLAYER_LIVES = 3;
 var GEM_POINTS = 3;
 var MAX_ROCKS = 4;
+var SCORE_THRESHOLD = 25;  //once player scores more than this points, increase game difficulty
 
 /*
  *
@@ -67,8 +69,8 @@ Enemy.prototype.Y_OFFSET = -17; //px
 Enemy.prototype.enemyHighestRow = 1;  
 Enemy.prototype.enemyLowestRow = 3;
 //For speed:
-Enemy.prototype.MIN_SPEED = 1;
-Enemy.prototype.MAX_SPEED = 8;
+Enemy.prototype.MIN_SPEED = 2;
+Enemy.prototype.MAX_SPEED = 10;
 Enemy.prototype.DEFAULT_SPEED = 20; //px
 
 /* Enemy Methods */
@@ -176,6 +178,13 @@ Enemy.prototype.detectCollision = function() {
 	}
 };
 
+//For resetting after a game over.  Reposition, re-speed the enemy, recalc centerX
+Enemy.prototype.reset = function() {
+	this.spawn(SCREEN_WIDTH);
+	this.setRandomSpeed();
+	this.setCurrentCenterX();
+};
+
 
 /*
  *
@@ -262,7 +271,7 @@ Player.prototype.update = function() {
 		gem.resetEffect();  //reset in case player picked up a gem this round
 		star.setCol(this.col);  //place the star where the player crossed the goal line
 		this.finished = true;  //scored a goal!  Show a gold star
-		stats.updateScore(GOAL_POINTS);  //update the score
+		stats.updateScore(goalPoints, true);  //update the score
 		this.placeAtStart();  //reset player position
 		gem.spawn();  //spawn a new gem for this next 'level'
 	}
@@ -270,7 +279,7 @@ Player.prototype.update = function() {
 	//if stepped on a gem:
 	if (gem.inPlay && gem.col === this.col && gem.row == this.row) {
 		gem.inPlay = false;  //no longer render the gem
-		stats.updateScore(GEM_POINTS);  //increase score
+		stats.updateScore(GEM_POINTS, false);  //increase score
 		gem.statusEffect();  //trigger the gem's additional effect
 
 		if (gem.gemEffect === gem.BLUE) {  //the blue rock requires some additional prep
@@ -371,6 +380,8 @@ Player.prototype.handleInput = function(key) {
 			case 'c':
 				this.nextSprite();
 				this.setSprite();
+				console.log("score threshold: " + stats.scoreThreshold);
+				console.log("num enemies in game: " + allEnemies.length);
 				break;
 		}
 	}
@@ -455,20 +466,24 @@ var Stats = function() {
 	this.high = 0;  //best score ever
 	//x location same as label, y location same as score
 
+	//Score Threshold:
+	this.scoreThreshold = 0;  //once this goes over X # of points, increase the game difficulty
+
 	//Aesthetics:
 	this.labelColor = '#777';
 	this.scoreColor = '#000';
 	this.labelFont = '12pt Tahoma, sans-serif';
 	this.scoreFont = '16pt Tahoma, sans-serif';
 
-	//Game Over banner:
+	//Game Over:
+	  //Banner:
 	this.bannerFont = '30pt Tahoma, sans-serif';
 	this.bannerY = Math.floor(1.6 * ROW_HEIGHT);  //bannerX is just 0;  bannerWidth is screen_width
 	this.bannerHeight = 4 * ROW_HEIGHT;
 	this.bannerLabelY = Math.floor(2.25 * ROW_HEIGHT);
 	this.bannerScoreY = Math.floor(3.75 * ROW_HEIGHT);
 	this.bannerCenterX = Math.floor(SCREEN_WIDTH / 2);
-
+	  //Bool:
 	this.gameFinished = false;  //true when player loses last life.  Displays game over banner then
 };
 
@@ -509,9 +524,42 @@ Stats.prototype.renderScores = function() {
 };
 
 //Increases the current game's score by the value passed in
-Stats.prototype.updateScore = function(val) {
+//Takes a goal boolean which is used to separate goal points from gem points
+//Only goal points lead to a checkScoreThreshold call
+Stats.prototype.updateScore = function(val, goal) {
 	this.score += val;
 	this.render();  //update the labels
+	this.scoreThreshold += val;
+	if (goal) {  //only check threshold on goal scores, not gem pickups
+		this.checkScoreThreshold();  //see if this last score put them over the top
+	}
+};
+
+//Checks to see if the player has scored sufficient points to warrant an
+//increase in difficulty
+//This is ONLY called after scoring a GOAL, not a gem pickup.
+Stats.prototype.checkScoreThreshold = function() {
+	//don't go beyond MAX_ENEMIES number of enemies
+	if (allEnemies.length < MAX_ENEMIES && this.scoreThreshold >= SCORE_THRESHOLD) {
+		this.increaseDifficulty();
+		this.increaseGoalPoints();
+		this.scoreThreshold = 0;  //reset
+	}
+};
+
+//Adds another enemy into the game to make it harder
+//This can ONLY be called after scoring a GOAL, not a gem pickup.
+  //^This is to prevent a rare but possible situation where a player
+  //picks up a gem and an enemy spawns on him.  Not very fair
+Stats.prototype.increaseDifficulty = function() {
+	allEnemies.push(new Enemy());  //toss in another enemy
+};
+
+//As a reward for facing an increased difficulty, goal points are worth more.
+//Since difficulty PERSISTS (after a game over, the difficulty remains),
+//this reward, too, persists.
+Stats.prototype.increaseGoalPoints = function() {
+	goalPoints++;
 };
 
 //updates the player's best ever score upon game finish if it's a new record
@@ -521,21 +569,24 @@ Stats.prototype.updateHigh = function() {
 	}
 }
 
+//Basically resets everything and starts a new game
 Stats.prototype.gameOver = function() {
 	this.updateHigh();  //check to see if there was a high score
 	player.lives = PLAYER_LIVES;  //reset player lives to beginning amount
 	this.score = 0;  //reset score
+	this.scoreThreshold = 0;
 	this.render();  //update the display
 	gem.resetEffect();  //remove the gemEffect if there was any
 	gem.spawn();  //spawn a new gem
-	//respawn all the enemies at new locations / speeds
+	//respawn all the enemies (even extra difficulty ones) at new locations / speeds
+	  //^Thus, difficulty persits over to a new game
 	allEnemies.forEach(function(enemy) {
-		enemy.spawn(SCREEN_WIDTH);
-		enemy.setRandomSpeed();
-		enemy.setCurrentCenterX();
+		enemy.reset();
 	});
 }
 
+//Display a game over banner with the player's score so that they get more clear
+//feedback that they've lost all 3 of their lives
 Stats.prototype.renderGameOver = function() {
 	if (stats.gameFinished) {
 		//display a red semi-transparent banner:
@@ -730,7 +781,7 @@ Rock.prototype.deactivate = function() {
 // Place all enemy objects in an array called allEnemies
 // Place the player object in a variable called player
 var allEnemies = [];
-for (var i = 0; i < MAX_ENEMIES; i++) {
+for (var i = 0; i < STARTING_ENEMIES; i++) {
 	allEnemies.push(new Enemy());
 }
 
@@ -826,7 +877,7 @@ function shuffleArray(length) {
 /* List of Added Extras:
   -switch character sprites
   -mouse input
-  -animations (collision) / star appears upon goal scored
+  -animations: collision-spin / star appears upon goal scored
   -a lives (hearts) system
   -score/high score
   -game over
@@ -841,9 +892,6 @@ function shuffleArray(length) {
     -touch controls / responsiveness?
 */
 
-//still TODO basics:
-  //AND IN THE project notes === you GOTTA tell them that the orange gem INTENTIONALLY prevents moving backwards
-  	//otherwise, they might view it as a fatal error/flaw.
 
 //advanced TODOs:
 
@@ -853,9 +901,7 @@ function shuffleArray(length) {
 
 
 //Difficulty ideas:
-  		// either a gem or just a 'once score reaches threshold' thing:  add another row of stones
   		   //and increase the number of enemies in the game?
-  		   //and/or increase the min / max speed of the enemies in the game?
 
 //Should you allow multiple gems to be on the map?  (Actually, can't as written.  Would have to switch to 
 	//separate bools instead of one generally gemEffect variable.)
