@@ -32,6 +32,7 @@ var MAX_ENEMIES = 10;
 var GOAL_POINTS = 2;
 var PLAYER_LIVES = 3;
 var GEM_POINTS = 3;
+var MAX_ROCKS = 4;
 
 /*
  *
@@ -258,7 +259,7 @@ Player.prototype.setCurrentCenterX = function() {
 Player.prototype.update = function() {
 	//if made it to the finish line (the water)
 	if (!this.finished && this.row === 0) {
-		gem.gemEffect = -1;  //reset in case player picked up a gem this round
+		gem.resetEffect();  //reset in case player picked up a gem this round
 		star.setCol(this.col);  //place the star where the player crossed the goal line
 		this.finished = true;  //scored a goal!  Show a gold star
 		stats.updateScore(GOAL_POINTS);  //update the score
@@ -271,6 +272,10 @@ Player.prototype.update = function() {
 		gem.inPlay = false;  //no longer render the gem
 		stats.updateScore(GEM_POINTS);  //increase score
 		gem.statusEffect();  //trigger the gem's additional effect
+
+		if (gem.gemEffect === gem.BLUE) {  //the blue rock requires some additional prep
+			gem.positionRocks();
+		}
 	}
 };
 
@@ -336,6 +341,13 @@ Player.prototype.handleInput = function(key) {
 		return;
 	}
 
+	//if a blue gem was picked up, check for rocks blocking an exit
+	if (gem.gemEffect === gem.BLUE && this.row === 1 && key === 'up') {
+		if (allRocks[this.col].inPlay) {  //if rock directly above
+			return;  //don't allow movement
+		}
+	}
+
 	if (!this.wasHit) {  //don't allow movement when death animation is occurring
 		switch(key) {
 			case 'left':
@@ -384,6 +396,13 @@ Player.prototype.handleClicks = function(tileCol, tileRow) {
 		//if an orange gem was picked up, prevent the player from moving backwards
 		if (gem.gemEffect === gem.ORANGE && nearY === 1) {
 			return;
+		}
+
+		//if a blue gem was picked up, check for rocks blocking an exit
+		if (gem.gemEffect === gem.BLUE && tileRow === 0) {
+			if (allRocks[tileCol].inPlay) {  //if rock in clicked tile
+				return;  //don't allow movement
+			}
 		}
 
 		//move if clicked on an adjacent (including diagonal) tile
@@ -485,7 +504,7 @@ Stats.prototype.gameOver = function() {
 	player.lives = PLAYER_LIVES;  //reset player lives to beginning amount
 	this.score = 0;  //reset score
 	this.render();  //update the display
-	gem.gemEffect = -1;  //remove the gemEffect if there was any
+	gem.resetEffect();  //remove the gemEffect if there was any
 	gem.spawn();  //spawn a new gem
 }
 
@@ -575,8 +594,7 @@ Gem.prototype.randomPosition = function() {
 
 //Choose a random gem type from the set of available gem sprites
 Gem.prototype.randomType = function() {
-	//this.type = getRandomInt(0, this.sprites.length - 1);
-	this.type = 1;
+	this.type = getRandomInt(0, this.sprites.length - 1);
 };
 
 //draws the sprite on the map, converts from tile coords to px
@@ -588,11 +606,75 @@ Gem.prototype.render = function() {
 
 //Based on the gem type, cause a different change to the gameplay
 //blue (0):  rocks form in the water and block goal line exits
-//green (1):  switches direction of the enemies (moonwalking bugs!!!)
+//green (1):  switches travel direction of the enemies (moonwalking bugs!!!)
 //orange (2):  prevents player from moving backwards
 Gem.prototype.statusEffect = function() {
 	this.gemEffect = this.type;
 };
+
+//When the blue gem is picked up, it places rocks over the exit points to block movement
+//This function, to introduce some randomness, first shuffles the indexes of the available rocks.
+//Then it chooses a random number for how many rocks to place in the exit row.
+//It then steps through that array of shuffled indexes to activate that number of rocks.
+Gem.prototype.positionRocks = function() {
+	var shuffledIndexes = shuffleArray(allRocks.length);
+
+	var numOfRocks = getRandomInt(1, MAX_COL_INDEX);  //min: one rock, max: one open exit space
+
+	for (var i = 0; i < numOfRocks; i++) {
+		allRocks[shuffledIndexes[i]].activate();
+	}
+};
+
+//Turns off any gem effect
+//If the gem was blue, turns off any rocks that were active
+Gem.prototype.resetEffect = function() {
+	if (gem.gemEffect === gem.BLUE) {
+		allRocks.forEach(function(rock) {
+			rock.deactivate();
+		});
+	}
+
+	this.gemEffect = -1;  //reset
+};
+
+/*
+ *
+ * Rock Class
+ *
+*/
+
+var Rock = function(index) {
+	//position:
+	this.col = index;  //x tile coord
+	//y is always the same, the row of water
+
+	//for movement prevention:
+	this.inPlay = false;  //when true, rock blocks exit
+};
+
+//Rock Constants
+
+Rock.prototype.SPRITE = 'images/Rock.png';
+Rock.prototype.Y = -1 * Math.floor(0.125 * COL_WIDTH);
+
+//Rock Methods
+
+//Draw the rock, but only when a blue gem has been picked up.
+//Also, only draw if this particular rock has been activated (inPlay)
+Rock.prototype.render = function() {
+	if (gem.gemEffect != undefined && gem.gemEffect === gem.BLUE && this.inPlay) {
+		ctx.drawImage(Resources.get(this.SPRITE), this.col * COL_WIDTH, this.Y);
+	}
+};
+
+Rock.prototype.activate = function() {
+	this.inPlay = true;
+};
+
+Rock.prototype.deactivate = function() {
+	this.inPlay = false;
+}
 
 /*
  *
@@ -615,6 +697,12 @@ var stats = new Stats();
 var star = new Star();
 
 var gem = new Gem();
+
+
+var allRocks = [];
+for (var i = 0; i <= MAX_COL_INDEX; i++) {  //make 5 rocks, one for each column
+	allRocks.push(new Rock(i));
+}
 
 /*
  *
@@ -666,6 +754,30 @@ function getRandomInt(min, max) {
 	return Math.floor(Math.random() * (max - min)) + min;
 }
 
+//Source:  taken and adapted from my own card game "Super Sevens"
+//Takes the length of an array and then returns an array of shuffled indexes
+function shuffleArray(length) {
+	var tempArray = [];
+	var arraySize = length;
+
+	for (var i = 0; i < length; i++) {  //create array of sequential indexes
+		tempArray.push(i);
+	}
+
+	//shuffle the index numbers:
+	//Choose a random index and swap it's entry with one
+	//available at the back of the array.  Step down and repeat.
+	var iRandom, temp;
+	while (arraySize > 0) {
+		arraySize--;
+		iRandom = getRandomInt(0, arraySize);
+		temp = tempArray[iRandom];  
+		tempArray[iRandom] = tempArray[arraySize];
+		tempArray[arraySize] = temp;
+	}
+
+	return tempArray;
+}
 
 /* List of Added Extras:
   -switch character sprites
@@ -674,6 +786,14 @@ function getRandomInt(min, max) {
   -a lives (hearts) system
   -score/high score
   -gem collection for extra points
+  -gem status effects:
+    -blue:   block exits with boulders
+    -green:  reverse travel direction of the enemies
+    -orange: prevent player from moving backwards
+
+  //and i'd still like to do:
+    -difficulty increases
+    -touch controls / responsiveness?
 */
 
 //still TODO basics:
@@ -690,13 +810,12 @@ function getRandomInt(min, max) {
 
 //optimize graphics by using spritesheets?  (whole lotta extra work though...)
 
-//Gems: 
-  //ideas:  -reverse the direction of the enemy movement?  === the green gem
-  		//  -could the bugs move down the columns?
-  		//  -condense all the enemies down to being on one row (prob too hard), or two rows?
-  		//  -increase enemy speed?
-  		//  -rocks fall down and block some of the water exits?  === the blue gem
-  		//  -the gem prevents you from moving backwards?  === the orange gem
-
+//Difficulty ideas:
   		// either a gem or just a 'once score reaches threshold' thing:  add another row of stones
   		   //and increase the number of enemies in the game?
+  		   //and/or increase the min / max speed of the enemies in the game?
+
+//I think you might need a game over screen.  Player might not notice otherwise.
+//Should you allow multiple gems to be on the map?  (Actually, can't as written.  Would have to switch to 
+	//separate bools instead of one generally gemEffect variable.)
+		//^I bet this would be more fun/interesting actually.  Shouldn't be too hard to refactor.

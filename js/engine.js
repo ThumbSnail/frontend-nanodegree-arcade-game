@@ -163,6 +163,10 @@ var Engine = (function(global) {
 			enemy.render();
 		});
 
+		allRocks.forEach(function(rock) { //render all the rocks, but only upon picking up a blue gem
+			rock.render();
+		});
+
 		player.render();
 
 		//stats.render();  //NO, don't do this here.  The text keeps drawing over itself, looking blurry.
@@ -197,7 +201,8 @@ var Engine = (function(global) {
 		'images/Heart.png',
 		'images/Gem Blue.png',
 		'images/Gem Green.png',
-		'images/Gem Orange.png'
+		'images/Gem Orange.png',
+		'images/Rock.png'
 	]);
 	Resources.onReady(init);
 
