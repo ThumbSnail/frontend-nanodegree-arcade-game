@@ -822,7 +822,7 @@ document.addEventListener('keydown', function(event) {
 
 //This adds the mouse as a control option
   //Source help:  http://www.homeandlearn.co.uk/JS/html5_canvas_mouse_events.html
-document.querySelector('#canvas').addEventListener('mousedown', function(event) {
+document.querySelector('#canvas').addEventListener('click', function(event) {
 	//convert mouse clicks to tile coordinates:
 	var tileCol = Math.floor(event.offsetX / COL_WIDTH);
 	//y is a little awkward due to the transparency included in the tile graphics
@@ -834,9 +834,24 @@ document.querySelector('#canvas').addEventListener('mousedown', function(event) 
 	}
 });
 
-//possible TODO:  set up touch listeners for mobile devices
+/*Wait, maybe not even needed?  Apparently 'click' counts as a touch?  Time to test.
+//This adds touch controls for mobile devices
   //Source help:  http://www.homeandlearn.co.uk/JS/html5_canvas_touch_events.html
+ document.querySelector('#canvas').addEventListener('touchstart', function(event) {
+ 	event.preventDefault();
 
+ 	//convert taps to tile coordinates:
+	var tileCol = Math.floor(event.targetTouches[0].offsetX / COL_WIDTH);
+	//y is a little awkward due to the transparency included in the tile graphics
+	//In effect, it's like there's an extra 60%-row of padding at the top of the canvas
+	var tileRow = Math.floor((event.offsetY - ROW_HEIGHT * 0.60) / ROW_HEIGHT);
+
+	if (tileRow >= 0 && tileRow < MAX_ROW_INDEX + 1) {  //weed out any clicks not on the actual tiles
+		player.handleClicks(tileCol, tileRow);
+	}
+
+ };
+*/
 /*
  *
  * Other Functions
