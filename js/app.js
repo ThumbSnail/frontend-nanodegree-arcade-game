@@ -620,6 +620,10 @@ var Star = function() {
 Star.prototype.render = function() {
 	if (player.finished) {  //only when player has scored a goal (reached the water)
 		ctx.drawImage(Resources.get(this.sprite), this.finalCol * COL_WIDTH, this.Y_OFFSET);
+		//Also display a label with the points received for scoring a goal:
+		ctx.fillStyle = '#000';
+		ctx.font = '20pt Tahoma, sans-serif';
+		ctx.fillText('+' + goalPoints, this.finalCol * COL_WIDTH + COL_WIDTH/2, ROW_HEIGHT);
 	}
 };
 
@@ -822,7 +826,7 @@ document.addEventListener('keydown', function(event) {
 
 //This adds the mouse as a control option
   //Source help:  http://www.homeandlearn.co.uk/JS/html5_canvas_mouse_events.html
-/*document.querySelector('#canvas').addEventListener('mousedown', function(event) {
+document.querySelector('#canvas').addEventListener('mousedown', function(event) {
 	//convert mouse clicks to tile coordinates:
 	var tileCol = Math.floor(event.offsetX / COL_WIDTH);
 	//y is a little awkward due to the transparency included in the tile graphics
@@ -832,31 +836,7 @@ document.addEventListener('keydown', function(event) {
 	if (tileRow >= 0 && tileRow < MAX_ROW_INDEX + 1) {  //weed out any clicks not on the actual tiles
 		player.handleClicks(tileCol, tileRow);
 	}
-});*/
-
-//This adds touch controls for mobile devices
-//Apparently mobile devices do count clicks as touches, but... it's very delayed.
-//This uses an actual touch event listener, and then just passes the coords into the
-//same function used to handle click logic
-  //Source help:  http://www.homeandlearn.co.uk/JS/html5_canvas_touch_events.html
-  /*http://stackoverflow.com/questions/9585487/ 
-     cant-get-coordinates-of-touchevents-in-javascript-on-android-devices*/
- document.querySelector('#canvas').addEventListener('touchstart', function(event) {
- 	event.preventDefault();
-
- 	var offsetX = document.querySelector('#canvas').offsetLeft;
- 	var offsetY = document.querySelector('#canvas').offsetTop;
-
- 	//convert taps to tile coordinates:
-	var tileCol = Math.floor(event.touches[0].pageX - offsetX  / COL_WIDTH);
-	//y is a little awkward due to the transparency included in the tile graphics
-	//In effect, it's like there's an extra 60%-row of padding at the top of the canvas
-	var tileRow = Math.floor((event.touches[0].pageY - offsetY - ROW_HEIGHT * 0.60) / ROW_HEIGHT);
-
-	if (tileRow >= 0 && tileRow < MAX_ROW_INDEX + 1) {  //weed out any clicks not on the actual tiles
-		player.handleClicks(tileCol, tileRow);
-	}
- });
+});
 
 /*
  *
@@ -908,19 +888,4 @@ function shuffleArray(length) {
     -green:  reverse travel direction of the enemies
     -orange: prevent player from moving backwards
   -difficulty increases:  more enemies based on higher scores
-
-  //and i'd still like to do:
-    -touch controls / responsiveness?
 */
-
-
-//advanced TODOs:
-
-//mobile device touch listener?
-  //^Likewise, is it possible to make this game responsive?  Can you scale down everything on a 
-    //canvas to make it fit on the screen?  And then update all the constants?
-
-//Should you allow multiple gems to be on the map?  (Actually, can't as written.  Would have to switch to 
-	//separate bools instead of one generally gemEffect variable.)
-		//^I bet this would be more fun/interesting actually.  Shouldn't be too hard to refactor.
-  //^Only do if you have time today.  Otherwise, what you've got is good and more than enough.

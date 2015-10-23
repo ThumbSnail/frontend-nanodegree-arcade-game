@@ -66,16 +66,19 @@ frontend-nanodegree-arcade-game
 	D. Difficulty
 
 		When the points received from scoring a goal (reaching the water tiles)
-		put your score over the threshold (25 points), the game's difficulty
+		put your score over a certain threshold, the game's difficulty
 		increased by adding an additional enemy into the mix.
 
 		As a reward for the increased difficulty, the number of points received
 		from scoring a goal also increases.
 
-		There are 5 difficulties.  Thus, once you score about 125 points, you'll
-		be facing off against 15 enemies instead of the starting 10.  And the points
-		received for scoring a goal will be 7 instead of the starting 2.
+		There are 5 difficulties.  The hardest difficult puts you up against
+		15 enemies instead of the starting 10.  And the points received for scoring
+		a goal will be 7 instead of the starting 2.
 
 		IMPORTANT:  The difficulty increase and the reward increase both persist
 		beyond a game over.
-		
+
+	E. Mobile Devices
+
+		No support added at this time.
