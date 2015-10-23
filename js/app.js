@@ -829,7 +829,7 @@ document.addEventListener('touchstart'), function(event) {
 
 	document.querySelector('#test1').innerHTML = "touch start";
 
-	document.querySelector('#test2').innerHTML = "pageX: " + event.pageX + ", pageY: " + event.pageY);
+	document.querySelector('#test2').innerHTML = "pageX: " + event.pageX + ", pageY: " + event.pageY;
 	//console.log("offsetX: " + event.offsetX + ", offsetY: " + event.offsetY);
 };
 
