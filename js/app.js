@@ -886,9 +886,9 @@ function shuffleArray(length) {
     -blue:   block exits with boulders
     -green:  reverse travel direction of the enemies
     -orange: prevent player from moving backwards
+  -difficulty increases:  more enemies based on higher scores
 
   //and i'd still like to do:
-    -difficulty increases
     -touch controls / responsiveness?
 */
 
@@ -899,10 +899,7 @@ function shuffleArray(length) {
   //^Likewise, is it possible to make this game responsive?  Can you scale down everything on a 
     //canvas to make it fit on the screen?  And then update all the constants?
 
-
-//Difficulty ideas:
-  		   //and increase the number of enemies in the game?
-
 //Should you allow multiple gems to be on the map?  (Actually, can't as written.  Would have to switch to 
 	//separate bools instead of one generally gemEffect variable.)
 		//^I bet this would be more fun/interesting actually.  Shouldn't be too hard to refactor.
+  //^Only do if you have time today.  Otherwise, what you've got is good and more than enough.
