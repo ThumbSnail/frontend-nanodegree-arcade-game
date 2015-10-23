@@ -851,7 +851,7 @@ document.querySelector('#canvas').addEventListener('mousedown', function(event) 
 	if (tileRow >= 0 && tileRow < MAX_ROW_INDEX + 1) {  //weed out any clicks not on the actual tiles
 		player.handleClicks(tileCol, tileRow);
 	}
- };
+ });
 
 /*
  *
