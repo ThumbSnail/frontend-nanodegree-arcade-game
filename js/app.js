@@ -839,14 +839,19 @@ document.querySelector('#canvas').addEventListener('mousedown', function(event) 
 //This uses an actual touch event listener, and then just passes the coords into the
 //same function used to handle click logic
   //Source help:  http://www.homeandlearn.co.uk/JS/html5_canvas_touch_events.html
+  /*http://stackoverflow.com/questions/9585487/ 
+     cant-get-coordinates-of-touchevents-in-javascript-on-android-devices*/
  document.querySelector('#canvas').addEventListener('touchstart', function(event) {
  	event.preventDefault();
 
+ 	var offsetX = document.querySelector('#canvas').offsetLeft;
+ 	var offsetY = document.querySelector('#canvas').offsetTop;
+
  	//convert taps to tile coordinates:
-	var tileCol = Math.floor(event.targetTouches[0].offsetX / COL_WIDTH);
+	var tileCol = Math.floor(event.targetTouches[0].pageX - offsetX  / COL_WIDTH);
 	//y is a little awkward due to the transparency included in the tile graphics
 	//In effect, it's like there's an extra 60%-row of padding at the top of the canvas
-	var tileRow = Math.floor((event.targetTouches[0].offsetY - ROW_HEIGHT * 0.60) / ROW_HEIGHT);
+	var tileRow = Math.floor((event.targetTouches[0].pageY - offsetY - ROW_HEIGHT * 0.60) / ROW_HEIGHT);
 
 	if (tileRow >= 0 && tileRow < MAX_ROW_INDEX + 1) {  //weed out any clicks not on the actual tiles
 		player.handleClicks(tileCol, tileRow);
