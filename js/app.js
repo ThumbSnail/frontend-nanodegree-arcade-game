@@ -170,7 +170,7 @@ Enemy.prototype.detectCollision = function() {
 			stats.render();  //update the number of hearts shown on this display
 			if (player.lives === 0) {
 				gem.inPlay = false;  //remove the current gem (if any)
-				stats.gameOver();
+				stats.gameFinished = true;  //display the game over banner.
 			}
 		}
 	}
@@ -332,6 +332,12 @@ Player.prototype.drawRedX = function(y) {
 //Also prevents player from moving off the game screen
 //The 'c' key is used to swap character sprites
 Player.prototype.handleInput = function(key) {
+	if (stats.gameFinished != undefined && stats.gameFinished) {  //if game was over, any valid key == start new game
+		stats.gameOver();  //handle all the game over stuff, reset everything
+		stats.gameFinished = false;
+		return;  //don't actually move on this key press, just clear off the game over banner
+	}
+
 	if (this.finished) {
 		this.finished = false;  //remove the 'hey, you scored!' feedback; that is, stop rendering the star
 	}
@@ -378,6 +384,12 @@ Player.prototype.handleInput = function(key) {
 //Player can also use the mouse with the same functionality
 //as the keyboard.  (but to change portraits, click the character.  [no c key obviously])
 Player.prototype.handleClicks = function(tileCol, tileRow) {
+	if (stats.gameFinished != undefined && stats.gameFinished) {  //if game was over, any valid click == start new game
+		stats.gameOver();  //handle all the game over stuff, reset everything
+		stats.gameFinished = false;
+		return;  //don't actually move on this click, just clear off the game over banner
+	}
+
 	if (this.finished) {
 		this.finished = false;  //remove the 'hey, you scored!' feedback; that is, stop rendering the star
 	}
@@ -448,6 +460,16 @@ var Stats = function() {
 	this.scoreColor = '#000';
 	this.labelFont = '12pt Tahoma, sans-serif';
 	this.scoreFont = '16pt Tahoma, sans-serif';
+
+	//Game Over banner:
+	this.bannerFont = '30pt Tahoma, sans-serif';
+	this.bannerY = Math.floor(1.6 * ROW_HEIGHT);  //bannerX is just 0;  bannerWidth is screen_width
+	this.bannerHeight = 4 * ROW_HEIGHT;
+	this.bannerLabelY = Math.floor(2.25 * ROW_HEIGHT);
+	this.bannerScoreY = Math.floor(3.75 * ROW_HEIGHT);
+	this.bannerCenterX = Math.floor(SCREEN_WIDTH / 2);
+
+	this.gameFinished = false;  //true when player loses last life.  Displays game over banner then
 };
 
 //Render all the stats information, at the top of the canvas, but outside the tile area
@@ -506,7 +528,29 @@ Stats.prototype.gameOver = function() {
 	this.render();  //update the display
 	gem.resetEffect();  //remove the gemEffect if there was any
 	gem.spawn();  //spawn a new gem
+	//respawn all the enemies at new locations / speeds
+	allEnemies.forEach(function(enemy) {
+		enemy.spawn(SCREEN_WIDTH);
+		enemy.setRandomSpeed();
+		enemy.setCurrentCenterX();
+	});
 }
+
+Stats.prototype.renderGameOver = function() {
+	if (stats.gameFinished) {
+		//display a red semi-transparent banner:
+		ctx.fillStyle = 'rgba(200, 0, 0, 0.75)';
+		ctx.fillRect(0, this.bannerY, SCREEN_WIDTH, this.bannerHeight);
+
+		//Draw the 'Game Over' label
+		ctx.fillStyle = '#fff';
+		ctx.font = this.bannerFont;
+		ctx.fillText('Game Over', this.bannerCenterX, this.bannerLabelY);
+
+		//Display the game's score:
+		ctx.fillText(this.score, this.bannerCenterX, this.bannerScoreY);
+	}
+};
 
 /*
  *
@@ -785,6 +829,7 @@ function shuffleArray(length) {
   -animations (collision) / star appears upon goal scored
   -a lives (hearts) system
   -score/high score
+  -game over
   -gem collection for extra points
   -gem status effects:
     -blue:   block exits with boulders
@@ -797,10 +842,8 @@ function shuffleArray(length) {
 */
 
 //still TODO basics:
-//update README  (you could also put the instruction in the html, too)
   //AND IN THE project notes === you GOTTA tell them that the orange gem INTENTIONALLY prevents moving backwards
   	//otherwise, they might view it as a fatal error/flaw.
-  	  //Maybe I should have it draw a red 'x' behind them, too?  Just to be safe?
 
 //advanced TODOs:
 
@@ -808,14 +851,12 @@ function shuffleArray(length) {
   //^Likewise, is it possible to make this game responsive?  Can you scale down everything on a 
     //canvas to make it fit on the screen?  And then update all the constants?
 
-//optimize graphics by using spritesheets?  (whole lotta extra work though...)
 
 //Difficulty ideas:
   		// either a gem or just a 'once score reaches threshold' thing:  add another row of stones
   		   //and increase the number of enemies in the game?
   		   //and/or increase the min / max speed of the enemies in the game?
 
-//I think you might need a game over screen.  Player might not notice otherwise.
 //Should you allow multiple gems to be on the map?  (Actually, can't as written.  Would have to switch to 
 	//separate bools instead of one generally gemEffect variable.)
 		//^I bet this would be more fun/interesting actually.  Shouldn't be too hard to refactor.

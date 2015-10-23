@@ -72,7 +72,7 @@ var Engine = (function(global) {
 	 */
 	function init() {
 		reset();
-		stats.render();  //draw the text ONCE (...not every tick)
+		stats.render();  //draw the text ONCE (...not every tick), then refresh as needed
 		lastTime = Date.now();
 		main();
 	}
@@ -173,6 +173,8 @@ var Engine = (function(global) {
 		  //Plus, this doesn't change that often anyways
 
 		star.render();  //only does something when player crosses the finish line (the water)
+
+		stats.renderGameOver();  //make it more apparent the game has ended, only draws at game over
 	}
 
 	/* This function does nothing but it could have been a good place to
