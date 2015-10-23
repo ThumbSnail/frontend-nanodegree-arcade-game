@@ -824,6 +824,25 @@ document.addEventListener('keydown', function(event) {
 	}
 });
 
+document.addEventListener('touchstart'), function(event) {
+	event.preventDefault();
+
+	document.querySelector('#test1').innerHTML = "touch start";
+
+	document.querySelector('#test2').innerHTML = "pageX: " + event.pageX + ", pageY: " + event.pageY);
+	//console.log("offsetX: " + event.offsetX + ", offsetY: " + event.offsetY);
+};
+
+document.addEventListener('touchmove'), function(event) {
+	//console.log("anything?")
+	event.preventDefault();
+};
+
+document.addEventListener('touchend'), function(event) {
+	//console.log("anything?")
+	event.preventDefault();
+};
+/*
 //This adds the mouse as a control option
   //Source help:  http://www.homeandlearn.co.uk/JS/html5_canvas_mouse_events.html
 document.querySelector('#canvas').addEventListener('mousedown', function(event) {
@@ -837,7 +856,7 @@ document.querySelector('#canvas').addEventListener('mousedown', function(event) 
 		player.handleClicks(tileCol, tileRow);
 	}
 });
-
+*/
 /*
  *
  * Other Functions
