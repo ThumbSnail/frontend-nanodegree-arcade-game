@@ -45,15 +45,16 @@ var SCORE_THRESHOLD = 25;  //once player scores more than this points, increase 
 // Enemies our player must avoid
 var Enemy = function() {
 	//for position:
-	this.x, this.row;  //row is (y) in tile coords
+	this.x = 0;
+	this.row = 0;  //row is (y) in tile coords
 	this.spawn(SCREEN_WIDTH);  //set up the position variables
 	
 	//for speed:
-	this.speed;
+	this.speed = 0;
 	this.setRandomSpeed();  //set up the speed
 
 	//for hit detection:
-	this.currentCenterX;  //it's center when taking account its current position
+	this.currentCenterX = 0;  //it's center when taking account its current position
 	this.setCurrentCenterX();  //set up the value
 };
 
@@ -77,7 +78,7 @@ Enemy.prototype.DEFAULT_SPEED = 20; //px
 
 //Sets the position x and row (y) of the enemy
 Enemy.prototype.spawn = function(maxRange) {
-	_spawnX.call(this, maxRange);;  //set x position of the enemy
+	_spawnX.call(this, maxRange);  //set x position of the enemy
 	_spawnRow.call(this);  //set row (y) position of the enemy
 
 	//Sets the x of the enemy
@@ -93,12 +94,12 @@ Enemy.prototype.spawn = function(maxRange) {
 	}
 };
 
-//My nice function won't work for the green gem's special effect.  In that case,
+//The function above won't work for the green gem's special effect.  In that case,
 //you need this other function to spawn bugs off the RIGHT side of the screen:
 Enemy.prototype.spawnReverse = function() {
 	this.x = SCREEN_WIDTH + COL_WIDTH + getRandomInt(0, 30);  //stick offscreen right + variance
 	this.row = getRandomInt(this.enemyHighestRow, this.enemyLowestRow);  //choose a row
-}
+};
 
 //set the additional speed factor of this enemy
 Enemy.prototype.setRandomSpeed = function() {
@@ -118,7 +119,7 @@ Enemy.prototype.update = function(dt) {
 	// all computers.
 
 	//if the player has picked up a green gem previously, switch the direction of the bugs' movement
-	if (gem.gemEffect != undefined && gem.gemEffect == gem.GREEN) {
+	if (gem.gemEffect !== undefined && gem.gemEffect == gem.GREEN) {
 		//update oppositely, travel to the left
 		this.x -= this.speed * this.DEFAULT_SPEED * dt; //distance travelled
 
@@ -169,7 +170,7 @@ Enemy.prototype.detectCollision = function() {
 		if (distance < bothRadii) {
 			player.wasHit = true;
 			player.lives--;
-			stats.render();  //update the number of hearts shown on this display
+			stats.render();  //update the number of hearts shown on the display
 			if (player.lives === 0) {
 				gem.inPlay = false;  //remove the current gem (if any)
 				stats.gameFinished = true;  //display the game over banner.
@@ -201,12 +202,12 @@ var Player = function() {
 	this.setSprite();  //assign the player an image based on its spriteIndex
 
 	//tile coordinates (since moves by tiles)
-	this.col;  //x
-	this.row;  //y
+	this.col = 0;  //x
+	this.row = 0;  //y
 	this.placeAtStart();  //put player at starting position
 
 	//for hit detection:
-	this.currentCenterX;  //it's center when taking account its current position
+	this.currentCenterX = 0;  //it's center when taking account its current position
 	this.setCurrentCenterX();  //set this value
 	this.wasHit = false;  //bool used for animation
 	this.lives = 3;  //3 hits before game over
@@ -226,7 +227,7 @@ Player.prototype.CENTER_X = Math.floor(COL_WIDTH / 2);  //the center of the play
 Player.prototype.CENTER_Y = COL_WIDTH;  //it's actually about 100 px down from the top, so just use COL_WIDTH
 Player.prototype.RADIUS = Math.floor(0.163 * COL_WIDTH);  //half the player's body is about 16px wide
 //For positioning:
-Player.prototype.Y_OFFSET = -1 * Math.floor(.13 * COL_WIDTH);  //to center the sprites on a tile
+Player.prototype.Y_OFFSET = -1 * Math.floor(0.13 * COL_WIDTH);  //to center the sprites on a tile
 Player.prototype.START_COL = 2;  //starting position tile x
 Player.prototype.START_ROW = 5;  //starting position tile y
 //For character graphic:
@@ -248,14 +249,14 @@ Player.prototype.setSprite = function() {
 //Increment spriteIndex and keep it in bounds of the SPRITES array
 Player.prototype.nextSprite = function() {
 	this.spriteIndex < this.SPRITES.length - 1 ? this.spriteIndex++ : this.spriteIndex = 0;
-}
+};
 
 //Places player at the starting position
 Player.prototype.placeAtStart = function() {
 	this.col = this.START_COL;
 	this.row = this.START_ROW;
-	this.setCurrentCenterX()
-}
+	this.setCurrentCenterX();
+};
 
 //Updates the player's current center (its center in relation to its position on the map)
 Player.prototype.setCurrentCenterX = function() {
@@ -282,7 +283,7 @@ Player.prototype.update = function() {
 		stats.updateScore(GEM_POINTS, false);  //increase score
 		gem.statusEffect();  //trigger the gem's additional effect
 
-		if (gem.gemEffect === gem.BLUE) {  //the blue rock requires some additional prep
+		if (gem.gemEffect === gem.BLUE) {  //the blue gem requires some additional prep
 			gem.positionRocks();
 		}
 	}
@@ -302,7 +303,7 @@ Player.prototype.render = function() {
 
 		//if orange gem was collected, player CANNOT move backwards
 		//thus, draw a red x behind him to make it more clear what's in effect
-		if (gem.gemEffect != undefined && gem.gemEffect === gem.ORANGE) {
+		if (gem.gemEffect !== undefined && gem.gemEffect === gem.ORANGE) {
 			this.drawRedX(y);
 		}
 	}
@@ -341,7 +342,7 @@ Player.prototype.drawRedX = function(y) {
 //Also prevents player from moving off the game screen
 //The 'c' key is used to swap character sprites
 Player.prototype.handleInput = function(key) {
-	if (stats.gameFinished != undefined && stats.gameFinished) {  //if game was over, any valid key == start new game
+	if (stats.gameFinished !== undefined && stats.gameFinished) {  //if game was over, any valid key == start new game
 		stats.gameOver();  //handle all the game over stuff, reset everything
 		stats.gameFinished = false;
 		return;  //don't actually move on this key press, just clear off the game over banner
@@ -380,8 +381,6 @@ Player.prototype.handleInput = function(key) {
 			case 'c':
 				this.nextSprite();
 				this.setSprite();
-				console.log("score threshold: " + stats.scoreThreshold);
-				console.log("num enemies in game: " + allEnemies.length);
 				break;
 		}
 	}
@@ -395,7 +394,7 @@ Player.prototype.handleInput = function(key) {
 //Player can also use the mouse with the same functionality
 //as the keyboard.  (but to change portraits, click the character.  [no c key obviously])
 Player.prototype.handleClicks = function(tileCol, tileRow) {
-	if (stats.gameFinished != undefined && stats.gameFinished) {  //if game was over, any valid click == start new game
+	if (stats.gameFinished !== undefined && stats.gameFinished) {  //if game was over, any valid click == start new game
 		stats.gameOver();  //handle all the game over stuff, reset everything
 		stats.gameFinished = false;
 		return;  //don't actually move on this click, just clear off the game over banner
@@ -487,9 +486,11 @@ var Stats = function() {
 	this.gameFinished = false;  //true when player loses last life.  Displays game over banner then
 };
 
+/* Stats Methods */
+
 //Render all the stats information, at the top of the canvas, but outside the tile area
 Stats.prototype.render = function() {
-	ctx.clearRect(0, 0, SCREEN_WIDTH, ROW_HEIGHT * .50);
+	ctx.clearRect(0, 0, SCREEN_WIDTH, ROW_HEIGHT * 0.5);
 	this.renderHearts();
 	this.renderLabels();
 	this.renderScores();
@@ -567,7 +568,7 @@ Stats.prototype.updateHigh = function() {
 	if (this.high < this.score) {
 		this.high = this.score;
 	}
-}
+};
 
 //Basically resets everything and starts a new game
 Stats.prototype.gameOver = function() {
@@ -583,7 +584,7 @@ Stats.prototype.gameOver = function() {
 	allEnemies.forEach(function(enemy) {
 		enemy.reset();
 	});
-}
+};
 
 //Display a game over banner with the player's score so that they get more clear
 //feedback that they've lost all 3 of their lives
@@ -612,9 +613,11 @@ Stats.prototype.renderGameOver = function() {
 var Star = function() {
 	this.sprite = 'images/Star.png';
 
-	this.finalCol;  //column to place the star in (the water tile the player steps on)
-	this.Y_OFFSET = -1 * Math.floor(.025 * COL_WIDTH);  //due to transparency, shift star to center
+	this.finalCol = 0;  //column to place the star in (the water tile the player steps on)
+	this.Y_OFFSET = -1 * Math.floor(0.025 * COL_WIDTH);  //due to transparency, shift star to center
 };
+
+/* Star Methods */
 
 //Once player reaches the water, give him/her a gold star
 Star.prototype.render = function() {
@@ -647,28 +650,30 @@ var Gem = function() {
 	];
 
 	//type:
-	this.type;  //serves as an index for the graphic, plus determines status effect
+	this.type = 0;  //serves as an index for the graphic, plus determines status effect
 
 	//position:
-	this.col;  //x pos in tile coord
-	this.row;  //y pos in tile coord
-	this.x;  //x in px
-	this.y;  //y in px
-	this.Y_OFFSET = -1 * Math.floor(.13 * COL_WIDTH);  //to center the sprites on a tile
-	this.spawn();  //setups a gem
+	this.col = 0;  //x pos in tile coord
+	this.row = 0;  //y pos in tile coord
+	this.x = 0;  //x in px
+	this.y = 0;  //y in px
+	this.Y_OFFSET = -1 * Math.floor(0.13 * COL_WIDTH);  //to center the sprites on a tile
+	this.spawn();  //sets up a gem
 
 	//detection/collision
-	this.inPlay;  //true when live, turns false after being picked up
+	this.inPlay = true;  //true when live, turns false after being picked up
 
 	//status effect
 	this.gemEffect = -1;  //-1 is none, otherwise matches its type when picked up
 };
 
-//Gem constants (to allow for easier readability)
+/* Gem constants (to allow for easier readability) */
+
 Gem.prototype.BLUE = 0;
 Gem.prototype.GREEN = 1;
 Gem.prototype.ORANGE = 2;
 
+/* Gem Methods */
 
 //Creates a gem:  chooses its location and its type
 Gem.prototype.spawn = function() {
@@ -752,28 +757,30 @@ var Rock = function(index) {
 	this.inPlay = false;  //when true, rock blocks exit
 };
 
-//Rock Constants
+/* Rock Constants */
 
 Rock.prototype.SPRITE = 'images/Rock.png';
 Rock.prototype.Y = -1 * Math.floor(0.125 * COL_WIDTH);
 
-//Rock Methods
+/* Rock Methods */
 
 //Draw the rock, but only when a blue gem has been picked up.
 //Also, only draw if this particular rock has been activated (inPlay)
 Rock.prototype.render = function() {
-	if (gem.gemEffect != undefined && gem.gemEffect === gem.BLUE && this.inPlay) {
+	if (gem.gemEffect !== undefined && gem.gemEffect === gem.BLUE && this.inPlay) {
 		ctx.drawImage(Resources.get(this.SPRITE), this.col * COL_WIDTH, this.Y);
 	}
 };
 
+//Sets a rock to active, meaning that it functions as a boulder blocking the player's path
 Rock.prototype.activate = function() {
 	this.inPlay = true;
 };
 
+//Sets rock to inactive, meaning the player can't see and it can't interfere with the player
 Rock.prototype.deactivate = function() {
 	this.inPlay = false;
-}
+};
 
 /*
  *
@@ -824,28 +831,11 @@ document.addEventListener('keydown', function(event) {
 	}
 });
 
-document.addEventListener('touchstart'), function(event) {
-	event.preventDefault();
-
-	document.querySelector('#test1').innerHTML = "touch start";
-
-	document.querySelector('#test2').innerHTML = "pageX: " + event.pageX + ", pageY: " + event.pageY;
-	//console.log("offsetX: " + event.offsetX + ", offsetY: " + event.offsetY);
-};
-
-document.addEventListener('touchmove'), function(event) {
-	//console.log("anything?")
-	event.preventDefault();
-};
-
-document.addEventListener('touchend'), function(event) {
-	//console.log("anything?")
-	event.preventDefault();
-};
-/*
 //This adds the mouse as a control option
   //Source help:  http://www.homeandlearn.co.uk/JS/html5_canvas_mouse_events.html
 document.querySelector('#canvas').addEventListener('mousedown', function(event) {
+	event.preventDefault();  //to stop mouse from highlighting 'Controls' text
+
 	//convert mouse clicks to tile coordinates:
 	var tileCol = Math.floor(event.offsetX / COL_WIDTH);
 	//y is a little awkward due to the transparency included in the tile graphics
@@ -856,7 +846,7 @@ document.querySelector('#canvas').addEventListener('mousedown', function(event) 
 		player.handleClicks(tileCol, tileRow);
 	}
 });
-*/
+
 /*
  *
  * Other Functions

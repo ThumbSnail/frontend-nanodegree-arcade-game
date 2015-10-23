@@ -1,7 +1,7 @@
 frontend-nanodegree-arcade-game
 ===============================
 
-1. How to Download/Install
+1. How to Download/Run
 
     A. Visit the webpage (easiest)
 

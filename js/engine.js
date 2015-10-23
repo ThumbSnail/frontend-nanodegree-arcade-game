@@ -21,14 +21,14 @@ var Engine = (function(global) {
 	 */
 	var doc = global.document,
 		win = global.window,
-		//canvas = doc.createElement('canvas'),
+
 		canvas = doc.querySelector('#canvas'),
 		ctx = canvas.getContext('2d'),
 		lastTime;
 
 	canvas.width = SCREEN_WIDTH;
 	canvas.height = SCREEN_HEIGHT;
-	//doc.body.appendChild(canvas);
+
 
 	//Make text easier to position:
 	ctx.textAlign = 'center';
