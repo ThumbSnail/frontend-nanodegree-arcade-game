@@ -78,3 +78,4 @@ frontend-nanodegree-arcade-game
 
 		IMPORTANT:  The difficulty increase and the reward increase both persist
 		beyond a game over.
+		
