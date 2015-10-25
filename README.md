@@ -46,6 +46,8 @@ frontend-nanodegree-arcade-game
 	    Mouse:     Click on any adjacent tile (even diagonal) to move there.
 	               Click on your character to change its sprite.
 
+	    Touch:	   Same as mouse.
+
     C. Challenges
 
 	    Enemies:  If a bug collides with you, you lose a life.  You begin each
@@ -81,4 +83,4 @@ frontend-nanodegree-arcade-game
 
 	E. Mobile Devices
 
-		No support added at this time.
+		Supports tablets and larger phones.

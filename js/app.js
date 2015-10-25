@@ -847,6 +847,26 @@ document.querySelector('#canvas').addEventListener('mousedown', function(event) 
 	}
 });
 
+//This adds touch controls
+  //The problem before was that, unlike clicks!!!, touch data comes with decimals...
+/*
+	Listens for touches, converts touch to tile coordinates, weeds out non-map tiles
+*/
+var myCanvas = document.querySelector('#canvas');
+myCanvas.addEventListener('touchstart', function(event) {
+	event.preventDefault();  //MUST do this to prevent that 300ms delay
+	var intTouchX = Math.floor(event.targetTouches[0].pageX) - myCanvas.offsetLeft;
+	var intTouchY = Math.floor(event.targetTouches[0].pageY) - myCanvas.offsetTop;
+
+	var tileCol = Math.floor(intTouchX / COL_WIDTH);
+	var tileRow = Math.floor((intTouchY - ROW_HEIGHT * 0.60) / ROW_HEIGHT);
+
+	if (tileRow >= 0 && tileRow < MAX_ROW_INDEX + 1) {
+		player.handleClicks(tileCol, tileRow);
+	}
+
+});
+
 /*
  *
  * Other Functions
