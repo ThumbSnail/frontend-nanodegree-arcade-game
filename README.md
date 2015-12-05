@@ -1,31 +1,30 @@
-frontend-nanodegree-arcade-game
-===============================
+##Frogger Clone
 
-1. Description
+A.  Description
 
 	Project 3 for Udacity's Front-End Web Developer Nanodegree
 
 	An HTML5 Canvas powered video game, developed using the best practices in
 	Object-Oriented JavaScript.
 
-2. How to Download/Run
+B.  How to Download/Run
 
-	A. Visit the following link:
+	1.  Visit the following link:
 
 [http://thumbsnail.github.io/frontend-nanodegree-arcade-game](http://thumbsnail.github.io/frontend-nanodegree-arcade-game)
 
-	B. Or download the project's .zip file.  Unzip the file and then open the index.html 
+	2.  Or download the project's .zip file.  Unzip the file and then open the index.html 
 		file in your browser of choice:
 
 [https://github.com/ThumbSnail/frontend-nanodegree-arcade-game/archive/master.zip](https://github.com/ThumbSnail/frontend-nanodegree-arcade-game/archive/master.zip)
 
-	C. Or clone the repository:
+	3.  Or clone the repository:
 		git clone https://github.com/ThumbSnail/frontend-nanodegree-arcade-game.git
 		Then open the index.html file in the browser of your choice.
 
-3. How to Play
+C. How to Play
 
-	A. Goal
+	1. Goal
 
 	    To get the highest score! Points are obtained in two ways:
 
@@ -37,7 +36,7 @@ frontend-nanodegree-arcade-game
 	        Picking up a gem:  Collect gems by navigating to a tile with a gem
 	        on it.  Each gem you collect is worth 3 points.
 
-	B. Controls
+	2. Controls
 
 	    Keyboard:  Use the arrow keys to move up, left, down, and right.
 	               Press the 'c' key to change your character's sprite.
@@ -47,7 +46,7 @@ frontend-nanodegree-arcade-game
 
 	    Touch:	   Same as mouse.
 
-	C. Challenges
+	3. Challenges
 
 	    Enemies:  If a bug collides with you, you lose a life.  You begin each
 	              game with three lives.  If you lose all three lives, it's
@@ -64,7 +63,7 @@ frontend-nanodegree-arcade-game
 
 	        Orange:  You are no longer allowed to move backwards.
 
-	D. Difficulty
+	4. Difficulty
 
 		When the points received from scoring a goal (reaching the water tiles)
 		put your score over a certain threshold, the game's difficulty
@@ -80,6 +79,6 @@ frontend-nanodegree-arcade-game
 		IMPORTANT:  The difficulty increase and the reward increase both persist
 		beyond a game over.
 
-	E. Mobile Devices
+	5. Mobile Devices
 
 		Supports tablets and larger phones.
