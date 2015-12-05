@@ -3,22 +3,16 @@ frontend-nanodegree-arcade-game
 
 1. How to Download/Run
 
-    A. Visit the webpage (easiest)
+    A. Visit the following link:
 
-    	A live version is hosted on GitHub pages.  Just visit this link:
+[http://thumbsnail.github.io/frontend-nanodegree-arcade-game](http://thumbsnail.github.io/frontend-nanodegree-arcade-game)
 
-    	http://thumbsnail.github.io/frontend-nanodegree-arcade-game
+    B. Or download the project's .zip file.  Unzip the file and then open the index.html 
+    	file in your browser of choice:
 
-    B. Download the .zip file (2nd easiest)
+[https://github.com/ThumbSnail/frontend-nanodegree-arcade-game/archive/master.zip](https://github.com/ThumbSnail/frontend-nanodegree-arcade-game/archive/master.zip)
 
-    	In my GitHub repository located at:
-
-    	https://github.com/ThumbSnail/frontend-nanodegree-arcade-game
-
-    	Click the Download ZIP button.  Unzip the file and then open the
-    	index.html file in your browser of choice.
-
-    C. Clone my repository (Hardest, unless you're familiar with GitHub/git)
+    C. Or clone the repository:
 
     	git clone https://github.com/ThumbSnail/frontend-nanodegree-arcade-game.git
 
